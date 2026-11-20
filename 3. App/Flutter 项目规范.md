@@ -28,66 +28,76 @@ dart run build_runner build -d
 ## 二、目录结构
 
 ```
-lib/
-├── main.dart                     # 入口：只调用 bootstrap
-├── bootstrap.dart                # 初始化(日志、存储、ProviderScope、错误捕获)
-├── app/
-│   ├── app.dart                  # MaterialApp.router
-│   ├── router/
-│   │   ├── app_router.dart       # go_router 配置(provider + refreshListenable)
-│   │   ├── app_routes.dart       # 强类型路由定义(@TypedGoRoute)
-│   │   └── app_routes.g.dart     # 生成的路由代码
-│   ├── l10n/
-│   │   └── delegates.dart        # 汇总各 feature 的 l10n delegate
-│   └── theme/                    # 主题、颜色、字体、间距规范
-│       ├── app_theme.dart        # ThemeData (Light/Dark)、ColorScheme
-│       ├── app_colors.dart       # 语义色扩展 (ThemeExtension)
-│       ├── app_typography.dart   # 统一排版与字体系统 (TextTheme)
-│       └── app_spacing.dart      # 统一间距 (AppSpacing) 与圆角 (AppRadius)
-├── core/                         # 与业务无关的基础设施
-│   ├── config/env.dart           # 环境配置（默认 prod，支持单参数切换）
-│   ├── network/
-│   │   ├── api_client.dart       # dio 封装，唯一发请求的地方
-│   │   ├── api_request.dart      # 请求基类(含 CancelToken / FormData / parse)
-│   │   ├── interceptors/         # 公共头、签名、鉴权、日志
-│   │   └── providers.dart
-│   ├── storage/                  # kv 存储、secure 存储封装
-│   ├── error/app_exception.dart
-│   ├── logging/
-│   └── utils/
-├── shared/                       # 跨 feature 复用
-│   ├── widgets/                  # 通用基础组件(无业务：AppButton、AppTextField、EmptyView 等)
-│   ├── extensions/               # context.l10n 等
-│   └── providers/                # 全局 provider(locale、themeMode)
-├── features/
-│   └── auth/                     # 每个 feature 自成一体
-│       ├── data/                 # 数据层（整个 feature 共享）
-│       │   ├── requests/         # LoginRequest 等请求对象
-│       │   ├── models/           # freezed + json (User, Token 等)
-│       │   └── auth_repository.dart
-│       ├── domain/               # 可选，见规则 6
-│       ├── l10n/                 # 该 feature 自己的文案与上下文扩展
-│       │   ├── auth_en.arb       # 模板语言，生成类 AuthLocalizations
-│       │   ├── auth_zh.arb
-│       │   ├── auth_l10n.dart    # context.authL10n 扩展（归属于文案层）
-│       │   └── generated/
-│       ├── auth_controller.dart  # feature 级全局状态（登录态、当前用户、登出等，keepAlive: true）
-│       ├── login/                # 页面级就近聚合：View 与 Controller 同目录
-│       │   ├── login_page.dart          # View
-│       │   ├── login_controller.dart    # ViewModel（基于 AsyncNotifier，无需多余 State 类）
-│       │   └── widgets/                 # （可选）仅登录页私有子组件
-│       ├── register/             # 注册页面
-│       │   ├── register_page.dart
-│       │   ├── register_controller.dart
-│       │   └── widgets/
-│       └── widgets/              # （可选）仅本 feature 多个页面共用的组件
-└── l10n/                         # 全局公共文案(确定/取消/通用错误等)
-    ├── app_en.arb                # 模板语言，生成类 AppLocalizations
-    ├── app_zh.arb
-    └── generated/
-
-tool/
-└── gen_l10n.dart                 # 跨平台 Dart 脚本：一次生成全局 + 所有 feature 的 l10n
+my-flutter-app/
+├── AI_RULES/                     # AI 协作主规范体系（单一真实来源，所有 AI 工具共用）
+│   ├── RULES.md                  # 规范总入口 / 规范清单 (Manifest)
+│   ├── core/                     # 核心规范：MASTER(行为), WORKFLOW(流程), COMMUNICATION(沟通)
+│   ├── development/              # 开发规范：CODING(编码), ARCHITECTURE(架构), TESTING(测试)
+│   ├── project/                  # 项目知识：CONTEXT(背景), DECISIONS(技术决策), STATUS(进度)
+│   └── CHANGELOG.md              # 规范变更记录
+├── AGENTS.md                     # Codex / Copilot / OpenDevin 平台适配入口
+├── CLAUDE.md                     # Claude Code 平台适配入口
+├── GEMINI.md                     # Gemini CLI / Antigravity 平台适配入口
+├── lib/
+│   ├── main.dart                 # 入口：只调用 bootstrap
+│   ├── bootstrap.dart            # 初始化(日志、存储、ProviderScope、错误捕获)
+│   ├── app/
+│   │   ├── app.dart              # MaterialApp.router
+│   │   ├── router/
+│   │   │   ├── app_router.dart   # go_router 配置(provider + refreshListenable)
+│   │   │   ├── app_routes.dart   # 强类型路由定义(@TypedGoRoute)
+│   │   │   └── app_routes.g.dart # 生成的路由代码
+│   │   ├── l10n/
+│   │   │   └── delegates.dart    # 汇总各 feature 的 l10n delegate
+│   │   └── theme/                # 主题、颜色、字体、间距规范
+│   │       ├── app_theme.dart    # ThemeData (Light/Dark)、ColorScheme
+│   │       ├── app_colors.dart   # 语义色扩展 (ThemeExtension)
+│   │       ├── app_typography.dart # 统一排版与字体系统 (TextTheme)
+│   │       └── app_spacing.dart  # 统一间距 (AppSpacing) 与圆角 (AppRadius)
+│   ├── core/                     # 与业务无关的基础设施
+│   │   ├── config/env.dart       # 环境配置（默认 prod，支持单参数切换）
+│   │   ├── network/
+│   │   │   ├── api_client.dart   # dio 封装，唯一发请求的地方
+│   │   │   ├── api_request.dart  # 请求基类(含 CancelToken / FormData / parse)
+│   │   │   ├── interceptors/     # 公共头、签名、鉴权、日志
+│   │   │   └── providers.dart
+│   │   ├── storage/              # kv 存储、secure 存储封装
+│   │   ├── error/app_exception.dart
+│   │   ├── logging/
+│   │   └── utils/
+│   ├── shared/                   # 跨 feature 复用
+│   │   ├── widgets/              # 通用基础组件(无业务：AppButton、AppTextField、EmptyView 等)
+│   │   ├── extensions/           # context.l10n 等
+│   │   └── providers/            # 全局 provider(locale、themeMode)
+│   ├── features/
+│   │   └── auth/                 # 每个 feature 自成一体
+│   │       ├── data/             # 数据层（整个 feature 共享）
+│   │       │   ├── requests/     # LoginRequest 等请求对象
+│   │       │   ├── models/       # freezed + json (User, Token 等)
+│   │       │   └── auth_repository.dart
+│   │       ├── domain/           # 可选，见规则 6
+│   │       ├── l10n/             # 该 feature 自己的文案与上下文扩展
+│   │       │   ├── auth_en.arb   # 模板语言，生成类 AuthLocalizations
+│   │       │   ├── auth_zh.arb
+│   │       │   ├── auth_l10n.dart # context.authL10n 扩展（归属于文案层）
+│   │       │   └── generated/
+│   │       ├── auth_controller.dart # feature 级全局状态（登录态、当前用户、登出等，keepAlive: true）
+│   │       ├── login/            # 页面级就近聚合：View 与 Controller 同目录
+│   │       │   ├── login_page.dart      # View
+│   │       │   ├── login_controller.dart # ViewModel（基于 AsyncNotifier，无需多余 State 类）
+│   │       │   └── widgets/             # （可选）仅登录页私有子组件
+│   │       ├── register/         # 注册页面
+│   │       │   ├── register_page.dart
+│   │       │   ├── register_controller.dart
+│   │       │   └── widgets/
+│   │       └── widgets/          # （可选）仅本 feature 多个页面共用的组件
+│   └── l10n/                     # 全局公共文案(确定/取消/通用错误等)
+│       ├── app_en.arb            # 模板语言，生成类 AppLocalizations
+│       ├── app_zh.arb
+│       └── generated/
+├── test/                         # 单元与集成测试（镜像对应 lib/）
+└── tool/
+    └── gen_l10n.dart             # 跨平台 Dart 脚本：一次生成全局 + 所有 feature 的 l10n
 ```
 
 ### 目录组织规则
@@ -106,6 +116,7 @@ tool/
 7. **强类型路由**：路由路径与传参统一在 `app/router/app_routes.dart` 通过 `go_router_builder` 定义，组件内禁止手写字符串路径与无类型安全的 `extra` 转换。
 8. **UI 设计系统规范**：组件间距、Padding、Margin 一律使用 `AppSpacing` 常量搭配 `Gap`；字体、颜色与圆角从 `Theme.of(context)` 获取，严禁硬编码魔法数值。组件交互与极端边界防御遵循第八节规范。
 9. **测试目录与源码镜像**：如 `test/features/auth/login/login_controller_test.dart`。
+10. **AI 规范单一真理源与平台适配**：工程根目录维护唯一的 `AI_RULES/` 知识库体系，`AGENTS.md`、`CLAUDE.md`、`GEMINI.md` 仅作为各 AI 平台的适配桥梁，统一指向 `AI_RULES/RULES.md`，杜绝多平台指令漂移。
 
 ---
 
@@ -1951,3 +1962,144 @@ flutter test
 - [ ]  没有手写 `Provider(...)`，全部使用 `@riverpod`
 - [ ]  没有 `print`，日志走统一入口
 - [ ]  `dart format`、`flutter analyze`、`flutter test` 全部通过
+- [ ]  **AI 协作与架构合规**：AI 生成的代码严格遵循 `AI_RULES/` 架构红线，无未批准的第三方 package 或非钦定状态管理方案
+- [ ]  **代码生成物一致性**：模型、路由已运行 `build_runner` 生成并无报错，ARB 文案已运行 `tool/gen_l10n.dart` 生成并提交
+- [ ]  **测试与防御保障**：新增业务逻辑均补充了对应的 Controller / Repository 单元测试，UI 完备处理长文本、输入框焦点、软键盘与四态防护
+
+---
+
+## 十二、AI 开发协作规范（AI_RULES 体系与落地）
+
+为了保障不同 AI 辅助工具（如 Cursor、Claude Code、GitHub Copilot、Gemini CLI、Antigravity 等）在协助开发 Flutter 项目时输出高度一致、符合工程架构且零质量妥协的代码，本项目严格遵循 `9. AI/AI 开发协作规范.md` 所定义的三层协作架构体系。
+
+### 12.1 核心架构定位
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                   平台适配层 (Adapters)                    │
+│      AGENTS.md      │      CLAUDE.md      │  GEMINI.md   │
+└─────────────────────────────┬────────────────────────────┘
+                              │ 统一指向 (@AI_RULES/RULES.md)
+                              ▼
+┌──────────────────────────────────────────────────────────┐
+│                   通用规范层 (AI_RULES)                    │
+│  RULES.md (总清单)                                        │
+│  ├── core/        (MASTER 行为、WORKFLOW 流程、COMM 沟通)     │
+│  ├── development/ (CODING 编码、ARCHITECTURE 架构、TESTING 测试)│
+│  └── project/     (CONTEXT 背景、DECISIONS 决策、STATUS 状态) │
+└──────────────────────────────────────────────────────────┘
+```
+
+1. **一套规范，全平台通行**：无论使用何种 AI 客户端或底层模型，统一读取 `AI_RULES/`，禁止不同工具私自定制冲突指令。
+2. **规范优先与模型无关**：当更换模型或工具版本时，通过完备的规则文档瞬间加载项目上下文，无需人工重复培训 AI。
+3. **技术决策闭环延续**：所有架构选型（如 Riverpod 代码生成、Typed GoRouter、Request Object 模式等）固化在 `project/DECISIONS.md`，杜绝 AI 擅自倒退回废弃写法。
+
+---
+
+### 12.2 AI 协作文件职责矩阵
+
+| 文件路径 | 规范标识 | 核心定位与职责 |
+| --- | --- | --- |
+| `AI_RULES/RULES.md` | **MANIFEST** | **AI 唯一主入口与索引清单**。定义文档权威性、执行优先级与核心技术栈速查。 |
+| `AI_RULES/core/MASTER.md` | **CORE-001** | **核心行为规范与红线禁令**。确立 AI 角色定位、安全边界与严禁违反的 10 条铁律。 |
+| `AI_RULES/core/WORKFLOW.md` | **CORE-002** | **标准作业流程 (SOP)**。规定 AI 从需求分析、方案确认、分层实施到静态检查的完整执行链路。 |
+| `AI_RULES/core/COMMUNICATION.md` | **CORE-003** | **沟通与交付规范**。约束 AI 回复风格、Diff 呈现、代码解释深度与决策对齐机制。 |
+| `AI_RULES/development/CODING.md` | **DEV-001** | **Flutter 编码规范**。Dart 3 新特性、命名、不可变性、UI 防御性边界与 Design Tokens。 |
+| `AI_RULES/development/ARCHITECTURE.md` | **DEV-002** | **MVVM 与分层架构规范**。View/Controller/Repository 职责划分、路由与多 Tab 架构、隔离网络。 |
+| `AI_RULES/development/TESTING.md` | **DEV-003** | **质量与测试规范**。ProviderContainer 测试、Repository Mocktail 测试、Widget 与 L10n 一致性测试。 |
+| `AI_RULES/project/CONTEXT.md` | **PROJECT-001** | **项目业务背景**。产品定位、业务领域、目标用户、核心功能矩阵与模块分布。 |
+| `AI_RULES/project/DECISIONS.md` | **PROJECT-002** | **架构决策记录 (ADR)**。记录为何选用 Riverpod 生成、Freezed、Dio 请求对象、ARB 隔离等技术决议。 |
+| `AI_RULES/project/STATUS.md` | **PROJECT-003** | **项目当前进展**。已完成模块、正在进行任务、遗留技术债务与后续迭代目标。 |
+| `AI_RULES/CHANGELOG.md` | — | **规范演进记录**。记录 AI 规则与架构约定的版本迭代变更。 |
+| `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` | — | **轻量平台引导入口**。仅包含引入 `@AI_RULES/RULES.md` 的锚点与基础触发指令。 |
+
+---
+
+### 12.3 AI 开发 Flutter 代码的十条绝对红线（Hard Bans）
+
+任何 AI 工具在编写或重构本项目代码时，**绝对禁止**以下行为：
+
+1. **严禁擅自引入未批准的第三方库**：绝对禁止在 `pubspec.yaml` 中添加任何未经评审的第三方依赖；严禁引入 `get_it`、`Bloc`、`Provider`、`GetX` 等非项目钦定方案。
+2. **严禁手写旧版或非生成版 Provider**：严禁书写 `StateNotifierProvider`、`ChangeNotifierProvider`、`FutureProvider` 等旧写法，所有 Provider 必须通过 `@riverpod` 或 `@Riverpod(keepAlive: true)` 注解生成。
+3. **严禁在 ViewModel/Controller 中引入 UI 依赖**：Controller 必须是纯 Dart 逻辑，绝对禁止引入 `BuildContext`、`Navigator`、`Widget` 或 `l10n`。
+4. **严禁在 Widget 的 `build()` 中触发产生副作用的操作**：绝对禁止在 `build()` 期间调用发起网络请求或修改状态的 Controller 方法，防止无限循环重绘。
+5. **严禁裸写魔术字符串进行路由跳转**：绝对禁止调用 `context.go('/path?id=1')` 或旧版 `Navigator.of(context).push(...)`，必须使用强类型 `XxxRoute(...).go(context)` 或 `.push(context)`。
+6. **严禁在 `appRouterProvider` 中直接 `ref.watch(authControllerProvider)`**：必须通过 `RouterRefreshNotifier` 与 `refreshListenable` 联动，防止路由树被销毁导致全屏白屏。
+7. **严禁硬编码文本、颜色或间距数值**：UI 文本一律接入 `l10n`；间距一律使用 `AppSpacing` 与 `Gap`；颜色一律取自 `Theme.of(context).colorScheme` 或 `AppCustomColors`。
+8. **严禁使用 `print()`**：日志必须走 `Talker` 或集中封装的 Logger 入口。
+9. **严禁直接对 `AsyncValue` 强行使用 `.requireValue`**：未完成或错误状态下调用 `.requireValue` 会导致红屏崩溃，必须使用 `.valueOrNull`、`.when()` 或安全防空处理。
+10. **严禁提交未通过静态校验与测试的代码**：代码产出后必须保证 `build_runner`、`gen_l10n.dart`、`dart format`、`flutter analyze` 与 `flutter test` 绿灯通过。
+
+---
+
+### 12.4 AI 辅助开发标准化作业流程（AI SOP）
+
+当向 AI 下发开发或修改任务时，AI 必须严格执行以下五步法：
+
+```mermaid
+flowchart LR
+    Step1["1. 上下文认知<br/>(读 RULES & Feature)"] --> Step2["2. 方案对齐<br/>(确认文件变更范围)"]
+    Step2 --> Step3["3. 分层实施<br/>(Data → VM → View)"]
+    Step3 --> Step4["4. 工具链执行<br/>(build_runner & l10n)"]
+    Step4 --> Step5["5. 静态验证<br/>(analyze & test)"]
+```
+
+1. **上下文认知与规则定位**：
+   - 读取 `AI_RULES/RULES.md` 确定适用的开发规则。
+   - 检索 `features/<feature>` 目录下已有的 Requests、Models、Repository 与 Controller，避免重复建设。
+2. **方案设计与变更预告**：
+   - 梳理需要创建/修改的文件清单，明确数据流向。
+   - 若涉及破坏性变更或状态迁移，主动向开发者呈现方案并征询确认。
+3. **严格按依赖分层实施代码**：
+   - **Step A: 数据层**（`data/requests/` 编写请求对象 -> `data/models/` 编写 freezed 模型 -> `data/xxx_repository.dart` 编写仓储及 provider）。
+   - **Step B: 状态/控制层**（`xxx/xxx_controller.dart`，基于 `AsyncNotifier`，使用 `AsyncValue.guard` 封装意图操作）。
+   - **Step C: 表现层**（`xxx/xxx_page.dart`，编写 UI 并防御长文本溢出、软键盘、四态、热区与下拉刷新）。
+   - **Step D: 路由与多语言**（`app/router/app_routes.dart` 注册强类型路由；`features/<feature>/l10n/` 补充 ARB 并更新上下文扩展）。
+4. **自动化工具链驱动**：
+   - 执行代码生成：`dart run build_runner build -d`
+   - 执行多语言生成：`dart run tool/gen_l10n.dart`
+5. **本地质量门禁自检**：
+   - 执行代码格式化：`dart format --set-exit-if-changed .`
+   - 执行静态代码分析：`flutter analyze`
+   - 编写配套单元测试与 Widget 测试，执行：`flutter test`
+
+---
+
+### 12.5 AI 常用指令范式（Prompts & Interaction Templates）
+
+开发者与 AI 协作时，可直接引用以下标准化 Prompt 模板，以激活最优开发范式：
+
+#### 模版 1：新增业务 Feature 模块
+```text
+请参考 @AI_RULES/RULES.md 与 @3. App/Flutter 项目规范.md，在 `features/` 下新增 [模块名] 模块。
+需求描述：[具体功能描述]
+要求：
+1. 采用 MVVM 架构与 Colocation 目录就近聚合；
+2. 数据层编写继承自 ApiRequest 的请求对象，模型采用 @freezed；
+3. Controller 优先采用 AsyncNotifier<void> + AsyncValue.guard；
+4. 页面完整处理 loading/empty/error/success 四态，防御长文本溢出与键盘避让；
+5. 注册强类型 GoRoute，ARB 隔离在当前 feature 的 l10n/ 目录下；
+6. 自动运行 build_runner 和 gen_l10n，并提供针对 Controller 的单元测试。
+```
+
+#### 模版 2：复杂页面 UI 还原与防御性重构
+```text
+请参考 @AI_RULES/development/CODING.md 中的 UI 规范，重构/实现 [页面名称] 的 View。
+要求：
+1. 严格使用 AppSpacing 常量与 Gap 组件，圆角使用 AppRadius；
+2. 色彩取自 Theme.of(context).colorScheme 或 AppCustomColors，禁止硬编码颜色；
+3. 对 Row/Flex 中的 Text 包裹 Expanded 并设置 maxLines 与 ellipsis；
+4. 输入框使用 AppTextField，带一键清空与密码切换，支持点击空白收起；
+5. 列表支持下拉刷新（AlwaysScrollableScrollPhysics）与左滑删除（AppDismissibleItem）；
+6. 按钮在 loading 时进入禁用态并展示微型指示器，防止重复点击。
+```
+
+#### 模版 3：编写单元测试与状态校验
+```text
+请参考 @AI_RULES/development/TESTING.md，为 [Controller 名称] 编写全覆盖单元测试。
+要求：
+1. 测试文件置于 `test/features/...` 镜像目录下；
+2. 使用 ProviderContainer 并通过 overrideWithValue mock 数据仓储；
+3. 覆盖初始状态、异步加载成功、网络异常（AppException）三种状态跃迁；
+4. 验证在发生错误时状态正确转换为 AsyncError，且未泄漏底层异常。
+```
