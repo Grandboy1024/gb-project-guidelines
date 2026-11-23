@@ -172,3 +172,60 @@ my-project/
 2. **自动化工具链联动**：每次涉及模型或路由修改必须执行 `dart run build_runner build -d`，涉及多语言文案必须执行 `dart run tool/gen_l10n.dart`。
 3. **质量闭环**：代码交付前必须确保 `dart format`、`flutter analyze` 与 `flutter test` 全部通过。
 
+# 四、FastAPI 后端工程落地实践
+
+在 FastAPI 云端业务与后台服务项目中，完整实例化上述三层 AI 协作架构。详细的后端开发与架构规范请查阅 [FastAPI 项目规范.md](../2.%20BackEnd/FastAPI%20项目规范.md)，AI 规范落地对应 `2. BackEnd/AI_RULES/` 目录。
+
+## 4.1 FastAPI 工程 AI 规范文件映射
+
+| 规范分层 | 对应文件路径 | 核心内容与标准 |
+| --- | --- | --- |
+| **总清单 (Manifest)** | `AI_RULES/RULES.md` | 统领所有规则，声明必须遵循的技术选型与执行优先级 |
+| **核心层 (Core)** | `AI_RULES/core/MASTER.md` | AI 行为准则与十条绝对禁止的硬性红线（禁同步阻塞、禁裸 SQL 等） |
+| | `AI_RULES/core/WORKFLOW.md` | 5 阶段标准化研发流程（认知 -> 方案 -> 分层实施 -> 工具链 -> 质量门禁） |
+| | `AI_RULES/core/COMMUNICATION.md` | 交互规范、代码变更呈现与决策确认标准 |
+| **开发层 (Development)**| `AI_RULES/development/CODING.md` | Python 3.12+ 语法、Pydantic V2、统一错误信封、并发锁与防御性入参校验 |
+| | `AI_RULES/development/ARCHITECTURE.md` | 领域模块化单体、Router/Service/Repository/Model 分层、异步 Session、依赖注入 |
+| | `AI_RULES/development/TESTING.md` | pytest-asyncio 异步测试、httpx 接口集成测试、Alembic 迁移与 Ruff/Mypy 门禁 |
+| **项目知识层 (Project)** | `AI_RULES/project/CONTEXT.md` | 产品定位、模块全景与基础设施概述 |
+| **架构决策层 (Decisions)** | `AI_RULES/project/DECISIONS.md` | 架构决策记录（ADR-001 ~ ADR-008） |
+| **状态层 (Status)** | `AI_RULES/project/STATUS.md` | 当前阶段、已落地模块与技术债务管理 |
+| **变更记录** | `AI_RULES/CHANGELOG.md` | 规范变更与版本演进记录 |
+| **平台适配入口** | `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` | 分别适配 Codex/Copilot、Claude Code、Gemini/Antigravity |
+
+## 4.2 核心执行原则
+
+1. **完全异步非阻塞**：请求链路中所有 I/O（DB、Redis、外部调用）必须完全异步，严禁使用同步阻塞库（如 `requests`、`time.sleep`）。
+2. **严防 SQL 注入与 N+1**：统一使用 SQLAlchemy 2.0 强类型 API，关联查询显式使用 `selectinload` 或 `joinedload`。
+3. **数据库变更可逆**：严禁手动修改数据库表结构，所有变更必须由 Alembic 迁移脚本承载并包含双向可逆的 `upgrade()` 与 `downgrade()`。
+4. **质量门禁闭环**：代码交付前必须确保 `ruff check`、`ruff format --check`、`mypy` 与 `pytest` 全部绿灯通过。
+
+# 五、React 前端工程落地实践
+
+在 React Web 运营管理后台项目中，完整实例化上述三层 AI 协作架构。详细的前端开发与架构规范请查阅 [React 项目规范.md](../4.%20FrontEnd/React%20项目规范.md)，AI 规范落地对应 `4. FrontEnd/AI_RULES/` 目录。
+
+## 5.1 React 工程 AI 规范文件映射
+
+| 规范分层 | 对应文件路径 | 核心内容与标准 |
+| --- | --- | --- |
+| **总清单 (Manifest)** | `AI_RULES/RULES.md` | 统领所有规则，声明必须遵循的技术选型与执行优先级 |
+| **核心层 (Core)** | `AI_RULES/core/MASTER.md` | AI 行为准则与十条绝对禁止的硬性红线（禁将服务端数据写入全局 Store 等） |
+| | `AI_RULES/core/WORKFLOW.md` | 5 阶段标准化研发流程（认知 -> 方案 -> 分层实施 -> 工具链 -> 质量门禁） |
+| | `AI_RULES/core/COMMUNICATION.md` | 交互规范、代码变更呈现与决策确认标准 |
+| **开发层 (Development)**| `AI_RULES/development/CODING.md` | TypeScript 严格模式、Zod 契约、四态闭环、UI 防御性边界与 Design Tokens |
+| | `AI_RULES/development/ARCHITECTURE.md` | 领域就近聚合 (Colocation)、TanStack Query 服务端缓存与 Zustand 客户端解耦 |
+| | `AI_RULES/development/TESTING.md` | Vitest + RTL 单元/Hook 测试、MSW 模拟网络接口与门禁脚本 |
+| **项目知识层 (Project)** | `AI_RULES/project/CONTEXT.md` | 产品定位、模块全景与基础设施概述 |
+| **架构决策层 (Decisions)** | `AI_RULES/project/DECISIONS.md` | 架构决策记录（ADR-001 ~ ADR-008） |
+| **状态层 (Status)** | `AI_RULES/project/STATUS.md` | 当前阶段、已落地模块与技术债务管理 |
+| **变更记录** | `AI_RULES/CHANGELOG.md` | 规范变更与版本演进记录 |
+| **平台适配入口** | `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` | 分别适配 Codex/Copilot、Claude Code、Gemini/Antigravity |
+
+## 5.2 核心执行原则
+
+1. **状态分离铁律**：服务端 API 响应数据一律由 TanStack Query 托管，严禁手动 `set` 到 Zustand 或全局 Store。
+2. **严格类型安全**：开启 TypeScript 严格模式，严禁通篇裸写 `any`，关键数据出入参使用 Zod 进行强校验。
+3. **零白屏与四态防御**：所有异步数据依赖页面与组件必须完整处理 Loading、Empty、Error（带重试按钮）与 Success。
+4. **质量门禁闭环**：代码交付前必须确保 `pnpm lint`、`tsc --noEmit` 与 `pnpm test` 全部通过。
+
+
