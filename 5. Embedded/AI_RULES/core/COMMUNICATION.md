@@ -33,7 +33,7 @@
 - [bsp_pins.h](file:///path/to/components/bsp/include/bsp_pins.h) - 新增硬件引脚映射与外设通道常量。
 - [driver_ledc.c](file:///path/to/components/drivers/src/driver_ledc.c) - 20kHz 高频 PWM 驱动与硬件渐变实现。
 - [lighting_cct.c](file:///path/to/components/lighting_engine/src/lighting_cct.c) - 2700K~6500K 双色温功率恒定插值算法。
-- [ble_gatts.c](file:///path/to/components/protocols/ble/src/ble_gatts.c) - 对齐《BLE API 规范》大端序指令解析与混淆 MAC 广播。
+- [ble_gatts.c](file:///path/to/components/protocols/ble/src/ble_gatts.c) - 对齐《BLE API 规范》大端序指令解析与 `0xFF77`/厂商数据广播。
 - [ota_upgrade.c](file:///path/to/components/ota_manager/src/ota_upgrade.c) - A/B 双分区写入、YBOT 头部验签与防回滚自检。
 - [test_lighting.c](file:///path/to/test/test_lighting.c) - Unity 单元测试用例。
 

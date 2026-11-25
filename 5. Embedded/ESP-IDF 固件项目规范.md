@@ -7,7 +7,7 @@
 | 固件开发框架 | **ESP-IDF v5.x** | 官方稳定长期支持版本 (LTS)，采用组件化驱动架构与统一构建系统 |
 | 编程语言标准 | **C99 / C11 强类型静态规范** | 严格类型检查、显式位宽 (`uint8_t` 等)，局部支持受限 C++17（严禁异常与 RTTI） |
 | 架构设计模式 | **组件化垂直分层 (Component-based Layered)** | 见第三节，`bsp / drivers / lighting_engine / protocols / ota_manager / storage` |
-| 蓝牙通信协议栈 | **NimBLE / Bluedroid (BLE 5.0 GATT)** | 见第四节，严格对齐《BLE API 规范》：0xFF 自定义厂商广播 (31 字节)、混淆 MAC、大端序 |
+| 蓝牙通信协议栈 | **NimBLE / Bluedroid (BLE 5.0 GATT)** | 见第四节，严格对齐《BLE API 规范》：31 字节主广播（Flags + `0xFF77` UUID + `0xFF` 厂商数据）、`DeviceID_Short`、大端序 |
 | 云端通信与配网 | **esp-mqtt (TLS 1.2/1.3) + esp_wifi** | 见第四节，严格对齐《MQTT 规范》：小驼峰 JSON 物模型、60s KeepAlive、遗嘱 LWT |
 | OTA 空中升级与容灾 | **A/B 双分区无缝升级 + Bootloader 回滚** | 见第六节，严格对齐《OTA 固件升级与设备管理规范》：YBOT 二进制信封、ECDSA-SHA256 验签、Anti-Rollback |
 | 调光控制与 PWM | **LEDC 硬件定时器 PWM** | 见第五节，频率 $\ge 20\text{kHz}$ 无频闪，13-bit 分辨率，Gamma 2.2 查找表，CCT 恒功率调色 |
@@ -90,7 +90,7 @@ my-firmware-project/
 │   ├── protocols/                # 网络与本地通信协议栈
 │   │   ├── CMakeLists.txt
 │   │   ├── ble/                  # 蓝牙通信实现 (对齐《BLE API 规范》)
-│   │   │   ├── ble_adv.c         # 0xFF 厂商自定义广播组包与混淆 MAC 运算
+│   │   │   ├── ble_adv.c         # 31B 主广播组包 (Flags + 0xFF77 UUID + 0xFF 厂商数据) 与 DeviceID_Short 填充
 │   │   │   ├── ble_gatts.c       # GATT Server 服务注册与大端序指令解析
 │   │   │   └── include/
 │   │   ├── mqtt/                 # 云端物联网通信 (对齐《MQTT 规范》)
@@ -190,36 +190,50 @@ FreeRTOS 任务优先级规划表：
 
 ### 4.1 BLE 广播包封装实现（对齐《BLE API 规范》）
 
-设备通过厂商自定义广播数据 (AD Type `0xFF`，总长 31 字节) 对外广播元数据。手机 App 无需建立 GATT 连接即可获取设备状态：
+设备通过总长固定 31 字节的 Legacy 主广播包对外广播元数据（3B `Flags` + 4B `0xFF77` Service UUID + 24B `AD Type 0xFF` 厂商自定义数据）。手机 App 无需建立 GATT 连接即可识别设备能力、状态与短标识，并支持 iOS 后台唤醒与硬件过滤：
 
 ```c
 // components/protocols/ble/include/ble_adv.h
 #pragma pack(push, 1)
 typedef struct {
-    uint8_t length;           // 0x1E (30 字节数据)
-    uint8_t type;             // 0xFF (Manufacturer Specific)
-    uint16_t company_id;      // 0x22FC (大端序)
-    uint16_t brand_id;        // 0x0001 (大端序)
-    uint16_t product_id;      // PID: 硬件功能型号识别码 (大端序)
-    uint8_t model_id;         // 外观与商业款型识别码 (基准款 0x00)
-    uint8_t state;            // 开关状态: 0x00 关, 0x01 开
-    uint8_t mac_xor[6];       // 物理 MAC 混淆数据 (raw_mac ^ 0xAD)
-    uint8_t reserve[15];      // 预留扩展字段，固定全填充 0x00
-} ble_manufacturer_data_t;
+    // 1. Flags AD Structure (3 Bytes)
+    uint8_t flags_len;          // 0x02
+    uint8_t flags_type;         // 0x01 (Flags)
+    uint8_t flags_val;          // 0x06 (LE General Discoverable | BR/EDR Not Supported)
+
+    // 2. Complete 16-bit Service UUIDs AD Structure (4 Bytes)
+    uint8_t uuid_len;           // 0x03
+    uint8_t uuid_type;          // 0x03 (Complete 16-bit Service UUIDs)
+    uint16_t service_uuid16;    // 0xFF77 (小端序存储为 0x77, 0xFF)
+
+    // 3. Manufacturer Specific Data AD Structure (24 Bytes)
+    uint8_t mfg_len;            // 0x17 (23 字节 = 1B Type + 22B Payload)
+    uint8_t mfg_type;           // 0xFF (Manufacturer Specific)
+    uint16_t company_id;        // CID: SIG 分配厂商码 (小端序，内测暂用 0xFFFF)
+    uint8_t adv_version;        // 0x01 (广播数据结构版本号)
+    uint16_t brand_id;          // BID: 品牌/品类识别码 (大端序)
+    uint16_t product_id;        // PID: 硬件功能型号识别码 (大端序)
+    uint8_t model_id;           // 外观与商业款型识别码 (基准款 0x00)
+    uint8_t cap_bitmap;         // CAP: 硬件能力与配网模式位图
+    uint8_t state_bitmap;       // STATE: Bit0开关 / Bit1绑定 / Bit2配网窗口 / Bit3 OTA
+    uint8_t state_seq;          // 状态变更循环递增序号 (防旧广播缓存回退)
+    uint8_t device_id_short[6]; // DeviceID[2..7] 原始字节流（非物理 MAC 简单异或）
+    uint8_t reserve[5];         // 预留扩展字段，固定全填充 0x00
+} ble_adv_packet_t;
 #pragma pack(pop)
+
+_Static_assert(sizeof(ble_adv_packet_t) == 31, "BLE legacy adv packet must be 31 bytes");
 ```
 
-- **物理 MAC 混淆算法**：
+- **`DeviceID_Short` 填充与状态序号更新**：
   ```c
-  void ble_adv_fill_obfuscated_mac(ble_manufacturer_data_t *adv_data) {
-      uint8_t raw_mac[6];
-      esp_read_mac(raw_mac, ESP_MAC_BT);
-      for (int i = 0; i < 6; i++) {
-          adv_data->mac_xor[i] = raw_mac[i] ^ 0xAD;
-      }
+  void ble_adv_fill_device_id_short(ble_adv_packet_t *adv, const uint8_t device_id[8]) {
+      // 取 8 字节 DeviceID 的末尾 6 字节作为广播逻辑短标识，避免直接暴露物理 MAC
+      memcpy(adv->device_id_short, &device_id[2], 6);
   }
   ```
-- **PID 与 ModelID 解耦**：PID 固化在固件 ROM 中，定义硬件能力（LEDC通道数、调光色温范围）；ModelID 烧录于出厂产线 NVS，定义外观款式。同一 PID 的所有产品共享同一固件镜像。
+- **PID 与 ModelID 解耦**：PID 固化在固件 ROM 中，定义硬件能力（LEDC 通道数、调光色温范围）；ModelID 烧录于出厂产线 NVS，定义外观款式。同一 PID 的所有产品共享同一固件镜像。
+- **分场景广播间隔**：未绑定/配网窗口期使用 `100ms ~ 200ms`；已绑定日常待机或 Wi-Fi 在线共存时降频至 `500ms ~ 1000ms`（OTA Bootloader 期间必须保持相同的 `BID`、`PID` 与 `DeviceID_Short`）。
 
 ### 4.2 BLE GATT 通信契约
 
@@ -514,7 +528,7 @@ TEST_CASE("CCT color mixing null pointer defense", "[lighting]") {
 - [ ]  跨任务数据共享已使用 FreeRTOS 队列、事件组或互斥量保护，无裸全局变量
 - [ ]  LEDC 硬件定时器 PWM 频率 $\ge 20\text{kHz}$，位深 13-bit，已接入 Gamma 2.2 调光曲线
 - [ ]  CCT 色温调节实现了功率守恒算法，调光具有平滑渐变 (Fade) 效果，无频闪
-- [ ]  BLE 广播严格对齐 31 字节 0xFF 厂商自定义格式，物理 MAC 已经异或 `0xAD` 混淆
+- [ ]  BLE 主广播严格对齐 31 字节格式（3B Flags + 4B `0xFF77` UUID + 24B `0xFF` 厂商数据），携带 `DeviceID_Short`、`CAP`、`STATE` 与 `StateSeq`
 - [ ]  BLE GATT 通信所有多字节整型字段均严格使用大端序 (Big-Endian)
 - [ ]  OTA 固件升级具备 YBOT 头部校验、硬件掩码比对、ECDSA 验签与自检回滚保护
 - [ ]  OTA 升级启动前校验了电池电量 ($\ge 30\%$)，低电量时坚决拒绝升级

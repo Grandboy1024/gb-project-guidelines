@@ -58,7 +58,7 @@ flowchart TD
   └── 存储与电源管理：components/storage/ (NVS 防抖持久化), components/power_mgmt/
         ▼
 [第 3 层：通信与协议层 (Protocols)]
-  ├── 蓝牙低功耗：components/protocols/ble/ (GATT Server, 0xFF 广播, MAC 混淆)
+  ├── 蓝牙低功耗：components/protocols/ble/ (GATT Server, 31B 主广播含 0xFF77 UUID 与 0xFF 厂商数据)
   ├── 云端与配网：components/protocols/mqtt/ (TLS 鉴权, JSON 物模型, 遗嘱 LWT)
   └── 固件空中升级：components/ota_manager/ (双分区写入, YBOT 验签, 防回滚)
         ▼
@@ -80,7 +80,7 @@ flowchart TD
 1. 固件编译构建：
    - 执行 `idf.py build`，确保编译过程 **0 错误、0 警告**，检查生成的固件大小 (`.bin`) 未超出分区表限制。
 2. 算法与协议单元测试：
-   - 对关键数学算法（Gamma 查找表、CCT 双色温插值）与协议解析器（BLE 广播解密、YBOT 头部信封解析），运行 Unity 测试用例确保全部绿灯通过。
+   - 对关键数学算法（Gamma 查找表、CCT 双色温插值）与协议解析器（BLE 广播解包、YBOT 头部信封解析），运行 Unity 测试用例确保全部绿灯通过。
 3. 检查任务堆栈高水位线与内存泄漏：
    - 确认关键任务堆栈余量充足 (`uxTaskGetStackHighWaterMark`)，杜绝堆栈溢出隐患。
 
