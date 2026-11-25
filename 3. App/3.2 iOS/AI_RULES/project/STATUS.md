@@ -18,7 +18,7 @@ iOS 原生移动端工程已完成架构选型对齐、基础规约制定，并�
 |---|---|---|
 | **架构总设计** | 已就绪 (Completed) | Clean MVVM 落地方案、SwiftUI 页面就近聚合 (Colocation)、单向数据流已固化 |
 | **AI 协作规范体系** | 已就绪 (Completed) | `RULES.md` 总清单、`core/`、`development/`、`project/`、适配入口全部就绪 |
-| **状态管理标准** | 已就绪 (Completed) | Observation 框架 (`@Observable`)、`@MainActor` 隔离与 `AsyncPhase<T>` 范式已确立 |
+| **状态管理标准** | 已就绪 (Completed) | iOS 16.0+ 兼容 `ObservableObject` + `@Published`、`@MainActor` 隔离与 `AsyncPhase<T>` 范式已确立 |
 | **强类型路由标准** | 已就绪 (Completed) | `NavigationStack` + `NavigationPath` + `AppRoute` 枚举体系与 TabView 状态隔离已确立 |
 | **网络层标准** | 已就绪 (Completed) | `ApiRequest` 强类型请求对象协议、响应外壳集中解包与 `AppException` 密封枚举已定义 |
 | **Design Tokens 系统** | 已就绪 (Completed) | `AppSpacing`、`AppRadius`、`AppColors`、`AppTypography` 与 SF Symbols 规范已建立 |

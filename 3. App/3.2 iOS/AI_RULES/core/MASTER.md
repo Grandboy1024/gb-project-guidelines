@@ -29,7 +29,7 @@
    - 所有依赖异步数据的页面必须完整实现「加载中、空状态、错误状态（带重试按钮）、成功状态」四态闭环。
    - 动态服务端文本必须添加截断防护，防止大字体下破坏界面。
 4. **单一真实来源原则（Single Source of Truth）**：
-   - 视图状态必须由 `@Observable` 修饰的 ViewModel 统一托管，严禁在不同子组件间同步手写散落状态。
+   - 视图状态必须由继承 `ObservableObject` 的 ViewModel 统一托管，严禁在不同子组件间同步手写散落状态。
 
 ---
 
@@ -40,7 +40,7 @@
 | 序号 | 严禁行为 | 原因与后果 |
 |---|---|---|
 | **1** | **严禁私自引入未经批准的第三方依赖** | 严禁擅自在 `Package.swift` 中添加第三方库。严禁引入未经批准的 Rx 包、第三方路由库或网络库。 |
-| **2** | **严禁倒退手写旧版 `ObservableObject` 与 `@Published`** | iOS 17+ 工程必须全面采用 `@Observable` 宏；严禁倒退编写臃肿低效的 `ObservableObject` 全量刷新方案。 |
+| **2** | **严禁在 iOS 16.0+ 工程中使用 iOS 17+ 专属 API** | 最低版本为 iOS 16.0+，严禁引入 `@Observable`、`@Bindable`、`SwiftData`、`ContentUnavailableView` 或双参数 `.onChange`，统一使用 `ObservableObject` + `@Published` + `@StateObject` 与 `CoreData`。 |
 | **3** | **严禁在 ViewModel 中引入 SwiftUI 或持有视图引用** | ViewModel 必须是纯 Swift 逻辑，严禁持有 `UIView`、`UIViewController` 或 SwiftUI 视图，切断视图层生命周期泄漏。 |
 | **4** | **严禁在 View 的 `body` 渲染方法中触发产生副作用的操作** | 严禁在 `body` 中直接调用异步请求或修改状态的方法，防止陷入主线程无限重绘死循环卡死。 |
 | **5** | **严禁裸写魔术字符串进行页面跳转** | 严禁手写 URL 字符串跳转内部页面。所有导航必须通过 `AppRoute` 强类型枚举由 `AppRouter` 调度。 |

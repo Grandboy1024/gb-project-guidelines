@@ -67,13 +67,16 @@ struct LoginViewModelTests {
         let vm = LoginViewModel(authRepository: mockRepo)
         vm.email = "test@domain.com"
         vm.password = "123456"
-        
-        vm.login()
-        try? await Task.sleep(nanoseconds: 30_000_000)
-        
-        #expect(vm.isLoading == false)
-        #expect(vm.isSuccess == false)
-        #expect(vm.errorMessage != nil)
+
+        await vm.performLogin()
+
+        #expect(vm.phase.isLoading == false)
+        #expect(vm.phase.isSuccess == false)
+        if case .failure = vm.phase {
+            #expect(true)
+        } else {
+            Issue.record("Expected failure phase")
+        }
     }
 }
 ```

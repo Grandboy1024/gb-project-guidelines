@@ -6,14 +6,14 @@
 
 ---
 
-## ADR-001: 采用 SwiftUI + Observation 框架作为唯一 UI 与状态响应方案
+## ADR-001: 最低部署版本统一为 iOS 16.0+，采用 SwiftUI + `ObservableObject` 作为 UI 与状态响应方案
 
 - **决策状态**：已确认 (Confirmed)
-- **背景背景**：传统 UIKit 模版代码冗长，且旧版 `ObservableObject` + `@Published` 会导致全 View 无差别重绘，影响列表与复杂页面性能。
-- **决策结论**：全工程统一采用 iOS 17+ 官方核心推荐的 **`@Observable` 宏**作为状态管理方案，ViewModel 统一绑定 `@MainActor`。
+- **背景**：项目需面向更广泛的存量用户设备，最低部署目标统一为 **iOS 16.0+**。由于 `@Observable`、`SwiftData` 与 `ContentUnavailableView` 均为 iOS 17.0+ 专属 API，在 iOS 16.0+ 基线下直接使用会导致无法编译或运行时崩溃。
+- **决策结论**：全工程统一以 **iOS 16.0+** 为最低支持版本，采用原生 **`ObservableObject` + `@Published`**（配合 `@StateObject` / `@ObservedObject` / `@EnvironmentObject`）与 **`CoreData`**，ViewModel 统一绑定 `@MainActor`，通过子视图拆分控制重绘粒度。
 - **强制规则**：
-  - 严禁手写旧版 `ObservableObject` 与 `@Published` 属性。
-  - 视图只读取状态，更新状态必须调用 ViewModel 暴露的方法。
+  - 严禁使用 `@Observable`、`@Bindable`、`SwiftData`、`ContentUnavailableView` 等 iOS 17+ 专属 API。
+  - 页面级 ViewModel 必须使用 `@StateObject` 持有，更新状态必须调用 ViewModel 暴露的方法。
 
 ---
 
@@ -51,3 +51,14 @@
 
 - **决策状态**：已确认 (Confirmed)
 - **决策结论**：全面基于 `os.Logger`，按 `subsystem` 与 `category` 分类管理；严禁在代码中使用裸 `print()`。
+
+---
+
+## ADR-006: 统一采用 Swift Package Manager (SPM) 管理依赖，禁止引入 CocoaPods
+
+- **决策状态**：已确认 (Confirmed)
+- **背景**：CocoaPods 强依赖本机 Ruby 环境、`Podfile` 与 `.xcworkspace` 侵入性工程改造，且官方已进入维护与退场阶段；部分老旧 Pod 未适配 Swift 6 严格并发及 `PrivacyInfo.xcprivacy` 隐私清单，易引入协作冲突与审核风险。
+- **决策结论**：全工程坚持 Apple 原生能力优先、极简依赖原则；确需引入经评审批准的第三方库（如 MQTT、崩溃监控等）时，统一使用 Xcode 原生 **Swift Package Manager (`SPM`)** 配合 `Package.resolved` 锁定版本；禁止新工程引入 CocoaPods。
+- **强制规则**：
+  - 严禁在工程中初始化或引入 `Podfile` / CocoaPods。
+  - 若外部闭源硬件或商业 SDK 暂不支持 SPM，仅允许在评审备案后通过本地 `XCFramework` 方式接入。

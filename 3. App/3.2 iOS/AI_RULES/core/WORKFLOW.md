@@ -51,7 +51,7 @@ flowchart TD
    - 编写遵循 `Codable` 与 `Sendable` 的 Model 结构体；
    - 编写 `XxxRepositoryProtocol` 与 `XxxRepository` 实现。
 2. **视图模型层 (ViewModel Layer)**：
-   - 编写声明 `@Observable` 与 `@MainActor` 的 ViewModel 类；
+   - 编写继承 `ObservableObject` 并标注 `@MainActor` 的 ViewModel 类；
    - 注入 Repository 协议，提供结构化 `Task` 调度与并发取消。
 3. **视图层 (View Layer)**：
    - 编写 SwiftUI 声明式视图，对接 `AppSpacing`、`AppRadius`、`AppColors`；

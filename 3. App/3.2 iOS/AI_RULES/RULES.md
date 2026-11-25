@@ -1,8 +1,8 @@
 # AI 统一规范清单 (Rules Manifest)
 
-版本：1.0.0  
-适用项目：iOS 原生移动端应用 (Native iOS App - Swift / SwiftUI)  
-最后更新：2026-11-24  
+版本：1.1.0  
+适用项目：iOS 原生移动端应用 (Native iOS App - Swift / SwiftUI, iOS 16.0+)  
+最后更新：2026-11-25  
 
 ---
 
@@ -35,7 +35,7 @@
 | 规范编号 | 文件路径 | 核心内容概述 |
 |---|---|---|
 | **DEV-001** | [development/CODING.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/development/CODING.md) | Modern Swift 严格并发、Design Tokens、44pt 触控防御与 UI 边界防护 |
-| **DEV-002** | [development/ARCHITECTURE.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/development/ARCHITECTURE.md) | Clean MVVM、SwiftUI Observation 细粒度追踪、NavigationStack 强类型路由与 ApiRequest 模式 |
+| **DEV-002** | [development/ARCHITECTURE.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/development/ARCHITECTURE.md) | Clean MVVM、`ObservableObject` + `@Published` 状态管理、`NavigationStack` 强类型路由与 `ApiRequest` 模式 |
 | **DEV-003** | [development/TESTING.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/development/TESTING.md) | Swift Testing 现代断言、异步并发测试、Protocol Mock 仓储测试与 String Catalogs 一致性 |
 
 ---
@@ -47,7 +47,7 @@
 | 规范编号 | 文件路径 | 核心内容概述 |
 |---|---|---|
 | **PROJECT-001** | [project/CONTEXT.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/project/CONTEXT.md) | 业务背景、产品定位与核心功能模块划分 |
-| **PROJECT-002** | [project/DECISIONS.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/project/DECISIONS.md) | 已确认的技术架构决策 (ADR-001 ~ ADR-008) |
+| **PROJECT-002** | [project/DECISIONS.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/project/DECISIONS.md) | 已确认的技术架构决策 (ADR-001 ~ ADR-006) |
 | **PROJECT-003** | [project/STATUS.md](file:///Users/grandboy/Desktop/grandboy/gb-project-guidelines/3.%20App/3.2%20iOS/AI_RULES/project/STATUS.md) | 项目当前进展阶段、已完成模块与后续演进目标 |
 
 ---
@@ -58,9 +58,10 @@ AI 生成的所有代码必须 100% 契合以下技术决策，严禁违背：
 
 | 技术领域 | 选型方案 | 对应规范索引 |
 |---|---|---|
+| **最低支持版本** | **iOS 16.0+**（禁用 `@Observable`、`SwiftData`、`ContentUnavailableView` 等 iOS 17+ 专属 API） | `DECISIONS.md` / `iOS 项目规范.md` 第一节 |
 | **语言与并发** | Swift 5.9+ / Swift 6，Strict Concurrency Complete，`async`/`await` + `Task` + `@MainActor` | `DEV-001` / `iOS 项目规范.md` 第一节 |
 | **架构模式** | Clean MVVM + 页面就近聚合 (Colocation) | `DEV-002` / `iOS 项目规范.md` 第三节 |
-| **状态管理** | Observation 框架 (`@Observable`, `@Bindable`)，细粒度属性追踪 | `DEV-002` / `iOS 项目规范.md` 第四节 |
+| **状态管理** | `ObservableObject` + `@Published`（`@StateObject` / `@ObservedObject` / `@EnvironmentObject`） | `DEV-002` / `iOS 项目规范.md` 第四节 |
 | **路由导航** | `NavigationStack` + `NavigationPath` + 强类型 `AppRoute` 枚举 | `DEV-002` / `iOS 项目规范.md` 第五节 |
 | **网络层** | `URLSession` + 请求对象模式 (`ApiRequest<T>`) + 统一响应外壳解包 | `DEV-002` / `iOS 项目规范.md` 第六节 |
 | **数据类 / 序列化** | 不可变 `struct` 遵循 `Codable` & `Sendable` | `DEV-001` / `iOS 项目规范.md` 第一节 |
@@ -69,6 +70,7 @@ AI 生成的所有代码必须 100% 契合以下技术决策，严禁违背：
 | **环境配置** | `xcconfig` 映射集中配置 (`Core/Config/Environment.swift`) | `DEV-002` / `iOS 项目规范.md` 第九节 |
 | **日志框架** | `os.Logger` 统一子系统与分类，严禁裸用 `print()` | `DEV-001` / `iOS 项目规范.md` 第九节 |
 | **测试框架** | `Swift Testing` (`@Test`, `#expect`) + `XCTest` | `DEV-003` / `iOS 项目规范.md` 第九节 |
+| **依赖包管理** | 原生 **SPM** (`Package.swift` / `Package.resolved`)，禁止引入 CocoaPods | `DECISIONS.md (ADR-006)` / `iOS 项目规范.md` 第一节 |
 
 ---
 

@@ -4,6 +4,14 @@
 
 ---
 
+## [1.1.0] - 2026-11-25
+
+### 变更 (Changed)
+- 统一最低部署版本为 **iOS 16.0+**，状态管理由 iOS 17+ `@Observable` 调整为 iOS 16 兼容的 `ObservableObject` + `@Published` + `@StateObject` / `@EnvironmentObject`，结构化本地缓存明确采用 `CoreData`，替换 `ContentUnavailableView` 为 `AppEmptyView`。
+- 对齐《RESTful API 规范》与《统一错误码与异常处理规范》：修正 `ApiResponseEnvelope` 成功码为 `0`、补充 `traceId` / `isRetryable` / `EmptyResponse`、修复 `Encodable` Body 序列化与 RFC 3339 毫秒日期解析、新增 `NetworkInterceptor` 与 `actor AuthTokenCoordinator` 并发刷新范式。
+- 修正 Dynamic Type 语义字阶、路由穷尽匹配与 Sheet/FullScreenCover 绑定、`Swift Testing` 消除 `Task.sleep` 竞态，并补充 `SwiftLint` / `PrivacyInfo.xcprivacy` / `Core/BLE` 规范。
+- 新增 `ADR-006`：明确依赖包管理统一采用原生 **SPM**，禁止引入 CocoaPods，无 SPM 支持的闭源 SDK 仅允许以本地 `XCFramework` 评审接入。
+
 ## [1.0.0] - 2026-11-24
 
 ### 新增 (Added)

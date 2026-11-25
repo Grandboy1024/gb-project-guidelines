@@ -17,7 +17,7 @@
 3. **严格并发与构建状态透明化**：
    - 简要汇报 Swift 严格并发检查结果与编译通过情况。
 4. **决策与权衡重点说明**：
-   - 涉及重要技术选型或架构取舍（如为何选择 `@Observable`、为何在特定场景采用结构化 `Task` 取消），简要说明设计理由与防御考量。
+   - 涉及重要技术选型或架构取舍（如为何选用 `ObservableObject` + `@StateObject` 兼容 iOS 16、为何在特定场景采用结构化 `Task` 取消），简要说明设计理由与防御考量。
 
 ---
 
@@ -32,7 +32,7 @@
 ### 2. 变更文件清单
 - [XxxRequest.swift](file:///path/to/XxxRequest.swift) - 新增 API 请求对象，声明响应泛型与请求体。
 - [XxxRepository.swift](file:///path/to/XxxRepository.swift) - 业务仓储协议与网络调度实现。
-- [XxxViewModel.swift](file:///path/to/XxxViewModel.swift) - 基于 @Observable 与 @MainActor 的页面控制器。
+- [XxxViewModel.swift](file:///path/to/XxxViewModel.swift) - 基于 ObservableObject 与 @MainActor 的页面控制器。
 - [XxxView.swift](file:///path/to/XxxView.swift) - SwiftUI 视图组件，完整处理四态闭环与 44pt 触控防御。
 - [AppRoute.swift](file:///path/to/AppRoute.swift) - 注册强类型 AppRoute 路由枚举。
 - [Xxx.xcstrings](file:///path/to/Xxx.xcstrings) - 本模块中英文国际化配置。
