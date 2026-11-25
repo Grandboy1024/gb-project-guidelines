@@ -43,13 +43,13 @@ app/src/main/java/com/fuxincanrui/app/features/auth/data/repository/AuthReposito
 ## 3. 控制器单元测试标准范式 (`Turbine` + `MockK`)
 
 ```kotlin
-package com.fuxincanrui.app.features.auth
+package com.aootek.apps.aootek.features.auth
 
 import app.cash.turbine.test
-import com.fuxincanrui.app.features.auth.data.models.AuthToken
-import com.fuxincanrui.app.features.auth.data.repository.AuthRepository
-import com.fuxincanrui.app.features.auth.login.LoginUiAction
-import com.fuxincanrui.app.features.auth.login.LoginViewModel
+import com.aootek.apps.aootek.features.auth.data.models.AuthToken
+import com.aootek.apps.aootek.features.auth.data.repository.AuthRepository
+import com.aootek.apps.aootek.features.auth.login.LoginUiAction
+import com.aootek.apps.aootek.features.auth.login.LoginViewModel
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

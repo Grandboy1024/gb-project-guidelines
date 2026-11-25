@@ -187,26 +187,22 @@ BLE Legacy 主广播包固定总长 **31 字节**，设备可读名称（Local N
 
 所有读写通信统一封装在 9 字节固定开销的协议帧内：
 
-```text
-+------+------+------+--------+-----+---------------+--------------+---------+
-| Head | Type | CMD  | Status | SEQ | Length (2B)   | Command Data | CRC16   |
-+------+------+------+--------+-----+---------------+--------------+---------+
-| 0xFE | 1 B  | 1 B  |  1 B   | 1 B | 2 Bytes (BE)  |   N Bytes    | 2B (BE) |
-+------+------+------+--------+-----+---------------+--------------+---------+
-```
+| `Head` | `Type` | `CMD` | `Status` | `SEQ` | `Length` | `Command Data` | `CRC16` |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| `0xFE` (1B) | 1B | 1B | 1B | 1B | 2B (BE) | NB | 2B (BE) |
 
 ### 4.1 字段定义
 
-| 字段 | 长度 | 取值范围 | 说明 |
-|---|:---:|---|---|
-| `Head` | 1B | 固定 `0xFE` | 帧起始标志 |
-| `Type` | 1B | `0x01` ~ `0x04` | 消息类型：`0x01`=REQUEST, `0x02`=RESPONSE, `0x03`=NOTIFY, `0x04`=EVENT |
-| `CMD` | 1B | `0x01` ~ `0xFE` | 业务功能指令码 |
-| `Status` | 1B | `0x00` ~ `0x0C` | 状态码：REQUEST 填 `0x00`；应答填执行结果（`0x00`=SUCCESS） |
-| `SEQ` | 1B | `0x00` ~ `0xFF` | 请求事务序列号：APP 循环递增分配，RESPONSE 原样回显；NOTIFY/EVENT 固定填 `0x00` |
-| `Length` | 2B | `0x0000` ~ `0xFFFF` | `Command Data` 字节数 $N$（大端序） |
-| `Data` | NB | 字节流 | 业务参数载荷（$N=0$ 时缺省） |
-| `CRC16` | 2B | 大端序 | CRC-16/CCITT-FALSE，覆盖除 CRC 本身外的全部前 $7+N$ 字节 |
+| 偏移 | 字段 | 长度 | 取值范围 | 说明 |
+|:---:|---|:---:|---|---|
+| `Byte 0` | `Head` | 1B | 固定 `0xFE` | 帧起始标志 |
+| `Byte 1` | `Type` | 1B | `0x01` ~ `0x04` | 消息类型：`0x01`=REQUEST, `0x02`=RESPONSE, `0x03`=NOTIFY, `0x04`=EVENT |
+| `Byte 2` | `CMD` | 1B | `0x01` ~ `0xFE` | 业务功能指令码 |
+| `Byte 3` | `Status` | 1B | `0x00` ~ `0x0C` | 状态码：REQUEST 填 `0x00`；RESPONSE 填执行结果（`0x00`=SUCCESS） |
+| `Byte 4` | `SEQ` | 1B | `0x00` ~ `0xFF` | 事务序列号：REQUEST 建议 `0x01~0xFF` 循环递增，RESPONSE 原样回显；NOTIFY/EVENT 固定填 `0x00` |
+| `Byte 5~6` | `Length` | 2B | `0x0000` ~ `0x0200` | `Command Data` 字节数 $N$（大端序，单帧上限 512 字节） |
+| `Byte 7..(6+N)` | `Command Data` | NB | 字节流 | 业务参数载荷（$N=0$ 时该段缺省） |
+| `Byte (7+N)..(8+N)` | `CRC16` | 2B | 大端序 | CRC-16/CCITT-FALSE，覆盖除 CRC 本身外的全部前 $7+N$ 字节 |
 
 ### 4.2 校验码算法 (CRC-16/CCITT-FALSE)
 - **多项式**：`0x1021`，**初始值**：`0xFFFF`，**RefIn/RefOut**：False，**XorOut**：`0x0000`。
@@ -214,6 +210,9 @@ BLE Legacy 主广播包固定总长 **31 字节**，设备可读名称（Local N
 
 ```c
 uint16_t ble_crc16_ccitt_false(const uint8_t *data, size_t len) {
+    if (data == NULL) {
+        return 0xFFFF;
+    }
     uint16_t crc = 0xFFFF;
     for (size_t i = 0; i < len; i++) {
         crc ^= (uint16_t)data[i] << 8;
@@ -222,6 +221,21 @@ uint16_t ble_crc16_ccitt_false(const uint8_t *data, size_t len) {
         }
     }
     return crc;
+}
+```
+
+```dart
+int crc16CcittFalse(List<int> data) {
+  int crc = 0xFFFF;
+  for (final byte in data) {
+    crc ^= (byte & 0xFF) << 8;
+    for (int b = 0; b < 8; b++) {
+      crc = (crc & 0x8000) != 0
+          ? ((crc << 1) ^ 0x1021) & 0xFFFF
+          : (crc << 1) & 0xFFFF;
+    }
+  }
+  return crc;
 }
 ```
 
@@ -237,6 +251,24 @@ export function crc16(buf: Uint8Array): number {
   return crc;
 }
 ```
+
+### 4.3 组帧、分片与异常处理规范
+
+- **单包优先与超 MTU 分片规则**：
+  - 正常协商 `ATT_MTU = 247` 时，单帧控制指令（$N \le 235$）必须通过单次 ATT Write/Notify 发出，避免额外分片开销。
+  - 若协商失败停留在默认 `ATT_MTU = 23` 或单帧总长 $9+N > \text{ATT\_MTU}-3$，发送端按 $\text{ATT\_MTU}-3$ 字节切片连续发送，接收端依据 `Head (0xFE)` + `Length` 进行流式拼包。
+  - 单帧载荷硬件上限为 **$N \le 512$ 字节**（整帧最大 521 字节），禁止发送端构造超限帧，防止嵌入式端内存溢出。
+- **接收端流式解析状态机**：
+  1. **帧头对齐**：若接收缓冲区首字节不是 `0xFE`，逐字节丢弃直至对齐 `0xFE`。
+  2. **长度防御**：读出 `Length` 后若 $N > 512$，立即清空缓冲区复位状态机，严禁继续等待后续字节。
+  3. **半包超时复位**：已收到帧头但超过 **500 ms** 未收齐完整 $9+N$ 字节帧时，必须丢弃残包并复位缓冲区，防止阻塞后续指令。
+  4. **CRC 校验丢弃**：收齐整帧后若 CRC16 不匹配，**静默丢弃**并复位状态机，严禁返回任何错误应答。
+- **Query / Set 语义与并发约定**：
+  - `Type = 0x01`（REQUEST）下，同一 `CMD` 以 $N = 0$ 表示 Query 查询、$N > 0$ 表示 Set 设置；若未来需要“带参数查询”，必须单独分配新 `CMD`，严禁与 Set 复用。
+  - 单条 BLE 链路同时在途未决 REQUEST 上限建议为 **4 条**（关键配置建议串行），超出设备队列能力时返回 `Status = 0x06 (BUSY)`。
+  - `NOTIFY`/`EVENT` 固定 `SEQ = 0x00`，不提供基于序列号的丢包检测或重复事件去重，APP 以设备最新上报状态为准。
+- **安全边界说明**：
+  - `CRC16` 与明文 `SEQ` 仅用于防无线误码及请求/应答事务匹配，**不具备密码学防伪造与防重放能力**。对出厂恢复 (`0x11`)、Wi-Fi 配网及产测调试 (`0xE0~0xFE`) 等敏感指令，设备端必须校验授权/会话状态（未授权返回 `0x07 NOT_AUTHORIZED`）或依赖 BLE 链路加密保护。
 
 ---
 

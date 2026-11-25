@@ -149,10 +149,10 @@ View (Compose) → ViewModel (StateFlow) → Repository → ApiClient / LocalSto
 
 ```kotlin
 // features/auth/login/LoginUiState.kt
-package com.fuxincanrui.app.features.auth.login
+package com.aootek.apps.aootek.features.auth.login
 
 import androidx.compose.runtime.Immutable
-import com.fuxincanrui.app.core.error.AppException
+import com.aootek.apps.aootek.core.error.AppException
 
 @Immutable
 data class LoginUiState(
@@ -178,12 +178,12 @@ sealed interface LoginUiAction {
 
 ```kotlin
 // features/auth/login/LoginViewModel.kt
-package com.fuxincanrui.app.features.auth.login
+package com.aootek.apps.aootek.features.auth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fuxincanrui.app.core.error.AppException
-import com.fuxincanrui.app.features.auth.data.repository.AuthRepository
+import com.aootek.apps.aootek.core.error.AppException
+import com.aootek.apps.aootek.features.auth.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -239,12 +239,12 @@ class LoginViewModel @Inject constructor(
 
 ```kotlin
 // features/auth/data/repository/AuthRepository.kt
-package com.fuxincanrui.app.features.auth.data.repository
+package com.aootek.apps.aootek.features.auth.data.repository
 
-import com.fuxincanrui.app.core.network.ApiClient
-import com.fuxincanrui.app.features.auth.data.models.AuthToken
-import com.fuxincanrui.app.features.auth.data.requests.LoginRequest
-import com.fuxincanrui.app.core.storage.KeychainStorage
+import com.aootek.apps.aootek.core.network.ApiClient
+import com.aootek.apps.aootek.features.auth.data.models.AuthToken
+import com.aootek.apps.aootek.features.auth.data.requests.LoginRequest
+import com.aootek.apps.aootek.core.storage.KeychainStorage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -272,7 +272,7 @@ class AuthRepositoryImpl @Inject constructor(
 
 ```kotlin
 // features/auth/login/LoginScreen.kt
-package com.fuxincanrui.app.features.auth.login
+package com.aootek.apps.aootek.features.auth.login
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -289,10 +289,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fuxincanrui.app.R
-import com.fuxincanrui.app.shared.components.AppButton
-import com.fuxincanrui.app.shared.components.AppTextField
-import com.fuxincanrui.app.theme.AppSpacing
+import com.aootek.apps.aootek.R
+import com.aootek.apps.aootek.shared.components.AppButton
+import com.aootek.apps.aootek.shared.components.AppTextField
+import com.aootek.apps.aootek.theme.AppSpacing
 
 @Composable
 fun LoginRoute(
@@ -434,10 +434,10 @@ fun LoginScreen(
 
 ```kotlin
 // core/network/UiState.kt
-package com.fuxincanrui.app.core.network
+package com.aootek.apps.aootek.core.network
 
 import androidx.compose.runtime.Immutable
-import com.fuxincanrui.app.core.error.AppException
+import com.aootek.apps.aootek.core.error.AppException
 
 @Immutable
 sealed interface AsyncUiState<out T> {
@@ -475,7 +475,7 @@ sealed interface AsyncUiState<out T> {
 
 ```kotlin
 // navigation/AppRoute.kt
-package com.fuxincanrui.app.navigation
+package com.aootek.apps.aootek.navigation
 
 import kotlinx.serialization.Serializable
 
@@ -510,7 +510,7 @@ sealed interface AppRoute {
 
 ```kotlin
 // navigation/AppNavHost.kt
-package com.fuxincanrui.app.navigation
+package com.aootek.apps.aootek.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -518,10 +518,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.fuxincanrui.app.features.auth.login.LoginRoute
-import com.fuxincanrui.app.features.auth.register.RegisterRoute
-import com.fuxincanrui.app.features.device.detail.DeviceDetailRoute
-import com.fuxincanrui.app.features.home.HomeMainRoute
+import com.aootek.apps.aootek.features.auth.login.LoginRoute
+import com.aootek.apps.aootek.features.auth.register.RegisterRoute
+import com.aootek.apps.aootek.features.device.detail.DeviceDetailRoute
+import com.aootek.apps.aootek.features.home.HomeMainRoute
 
 @Composable
 fun AppNavHost(
@@ -590,7 +590,7 @@ fun AppNavHost(
 
 ```kotlin
 // core/network/ApiRequest.kt
-package com.fuxincanrui.app.core.network
+package com.aootek.apps.aootek.core.network
 
 enum class HttpMethod { GET, POST, PUT, DELETE, PATCH }
 
@@ -611,11 +611,11 @@ interface ApiRequest<T> {
 
 ```kotlin
 // features/auth/data/requests/LoginRequest.kt
-package com.fuxincanrui.app.features.auth.data.requests
+package com.aootek.apps.aootek.features.auth.data.requests
 
-import com.fuxincanrui.app.core.network.ApiRequest
-import com.fuxincanrui.app.core.network.HttpMethod
-import com.fuxincanrui.app.features.auth.data.models.AuthToken
+import com.aootek.apps.aootek.core.network.ApiRequest
+import com.aootek.apps.aootek.core.network.HttpMethod
+import com.aootek.apps.aootek.features.auth.data.models.AuthToken
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -654,7 +654,7 @@ class LoginRequest(
 
 ```kotlin
 // core/network/ApiResponseEnvelope.kt
-package com.fuxincanrui.app.core.network
+package com.aootek.apps.aootek.core.network
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -667,10 +667,10 @@ data class ApiResponseEnvelope(
 )
 
 // core/network/ApiClient.kt
-package com.fuxincanrui.app.core.network
+package com.aootek.apps.aootek.core.network
 
-import com.fuxincanrui.app.core.error.AppException
-import com.fuxincanrui.app.core.storage.KeychainStorage
+import com.aootek.apps.aootek.core.error.AppException
+import com.aootek.apps.aootek.core.storage.KeychainStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -759,7 +759,7 @@ class ApiClient @Inject constructor(
 
 ```kotlin
 // core/error/AppException.kt
-package com.fuxincanrui.app.core.error
+package com.aootek.apps.aootek.core.error
 
 sealed class AppException(override val message: String) : Exception(message) {
     data object InvalidUrl : AppException("Invalid API URL")
@@ -811,7 +811,7 @@ sealed class AppException(override val message: String) : Exception(message) {
 
 ```kotlin
 // theme/Spacing.kt
-package com.fuxincanrui.app.theme
+package com.aootek.apps.aootek.theme
 
 import androidx.compose.ui.unit.dp
 
@@ -833,7 +833,7 @@ object AppSpacing {
 
 ```kotlin
 // theme/Shape.kt
-package com.fuxincanrui.app.theme
+package com.aootek.apps.aootek.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
@@ -871,7 +871,7 @@ IconButton(
 
 ```kotlin
 // shared/components/AppButton.kt
-package com.fuxincanrui.app.shared.components
+package com.aootek.apps.aootek.shared.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -879,7 +879,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.fuxincanrui.app.theme.AppRadius
+import com.aootek.apps.aootek.theme.AppRadius
 
 @Composable
 fun AppButton(
@@ -918,7 +918,7 @@ fun AppButton(
 
 ```kotlin
 // shared/components/AsyncPhaseView.kt
-package com.fuxincanrui.app.shared.components
+package com.aootek.apps.aootek.shared.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -927,9 +927,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.fuxincanrui.app.R
-import com.fuxincanrui.app.core.network.AsyncUiState
-import com.fuxincanrui.app.theme.AppSpacing
+import com.aootek.apps.aootek.R
+import com.aootek.apps.aootek.core.network.AsyncUiState
+import com.aootek.apps.aootek.theme.AppSpacing
 
 @Composable
 fun <T> AsyncPhaseView(
@@ -981,7 +981,7 @@ fun <T> AsyncPhaseView(
 
 ```kotlin
 // core/logging/AppLogger.kt
-package com.fuxincanrui.app.core.logging
+package com.aootek.apps.aootek.core.logging
 
 import timber.log.Timber
 
@@ -997,13 +997,13 @@ object AppLogger {
 
 ```kotlin
 // test/java/com/fuxincanrui/app/features/auth/LoginViewModelTest.kt
-package com.fuxincanrui.app.features.auth
+package com.aootek.apps.aootek.features.auth
 
 import app.cash.turbine.test
-import com.fuxincanrui.app.features.auth.data.models.AuthToken
-import com.fuxincanrui.app.features.auth.data.repository.AuthRepository
-import com.fuxincanrui.app.features.auth.login.LoginUiAction
-import com.fuxincanrui.app.features.auth.login.LoginViewModel
+import com.aootek.apps.aootek.features.auth.data.models.AuthToken
+import com.aootek.apps.aootek.features.auth.data.repository.AuthRepository
+import com.aootek.apps.aootek.features.auth.login.LoginUiAction
+import com.aootek.apps.aootek.features.auth.login.LoginViewModel
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

@@ -4,8 +4,8 @@
 | --- | --- | --- |
 | 语言与编译器 | **Swift 5.9+ / Swift 6** | 开启严格并发检查（Strict Concurrency Checking: `Complete`），全面采用现代并发机制（`async`/`await`、`actor`、`Task`、`Sendable`） |
 | 架构模式 | **Clean MVVM** | 见第三节，View (SwiftUI) / ViewModel (`@Observable` + `@MainActor`) / Repository / ApiClient / Storage |
-| UI 框架 | **SwiftUI** | iOS 16+（推荐 iOS 17+），全声明式 UI，组件原子化解耦，原生支持 Dynamic Island 与液态转场 |
-| 状态管理 | **Observation 框架**（`@Observable` / `@Bindable`） | iOS 17+ 官方核心推荐机制（针对 iOS 16 采用 `ObservableObject` + `@Published` 统一过渡包装），细粒度按属性追踪重绘，告别 `@Published` 全量刷新 |
+| UI 框架 | **SwiftUI** | iOS 16+，全声明式 UI，组件原子化解耦，原生支持 Dynamic Island 与液态转场 |
+| 状态管理 | **Observation 框架**（`@Observable` / `@Bindable`） | 针对 iOS 16 采用 `ObservableObject` + `@Published` 统一过渡包装，细粒度按属性追踪重绘，告别 `@Published` 全量刷新 |
 | 依赖注入 | **Protocol-based Dependency Container / Environment** | 基于 Swift 协议抽象的轻量容器化注入，严禁强耦合第三方庞大框架，测试期支持 Mock 无缝替换 |
 | 路由导航 | **`NavigationStack` + `NavigationPath`** | 见第五节，强类型路由 Enum（遵循 `Hashable` / `Codable`），统一支持 DeepLink 深度唤醒与栈式导航管控 |
 | 网络层 | **`URLSession` + 请求对象模式 (`ApiRequest<T>`)** | 见第六节，原生 `async/await` 调度，内置统一响应体外壳解包、Token 自动续期与 `Task` 生命周期取消 |
@@ -1230,7 +1230,7 @@ public enum Environment {
 import OSLog
 
 public enum AppLogger {
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.fuxincanrui.app"
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.aootek.apps.aootek"
     
     public static let network = Logger(subsystem: subsystem, category: "Network")
     public static let auth = Logger(subsystem: subsystem, category: "Auth")
