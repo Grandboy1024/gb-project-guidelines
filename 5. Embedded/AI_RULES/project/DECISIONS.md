@@ -28,14 +28,15 @@
 
 ---
 
-## ADR-003: 严格对齐《BLE API 规范》大端序与 31 字节主广播契约
+## ADR-003: 严格对齐《BLE API 规范》V1.1 帧结构、大端序与 31 字节主广播契约
 
 - **决策状态**：已确认 (Confirmed)
-- **决策背景**：iOS 系统不向 App 暴露真实蓝牙 MAC 地址且后台扫描依赖广播中的 Service UUID；跨端多字节整型若字节序不一致将导致协议解析错乱；简单的固定单字节 MAC 异或（`^ 0xAD`）不具备实际安全性。
-- **决策结论**：BLE GATT 协议严格执行《BLE API 规范》，31 字节主广播携带 `Flags`、`0xFF55` Service UUID 与 `0xFF` 厂商自定义数据（内含 `DeviceID[2..7]` 截取的 `DeviceID_Short`、`CAP`、`STATE` 与 `StateSeq`），应用层多字节整型严格采用**大端序 (Big-Endian)**，广播 `CID` 采用 Bluetooth SIG 标准**小端序**。
+- **决策背景**：iOS 系统不向 App 暴露真实蓝牙 MAC 地址且后台扫描依赖广播中的 Service UUID；跨端多字节整型若字节序不一致将导致协议解析错乱；简单的固定单字节 MAC 异或（`^ 0xAD`）不具备实际安全性；V1.0 的 1B SEQ 与全局 `Length=0` 判 Query 语义在长连接并发与带参查询场景存在局限。
+- **决策结论**：BLE GATT 协议严格执行《BLE API 规范》V1.1（`AdvVer = 0x02`、`ProtocolVersion = 0x0101`）：31 字节主广播携带 `Flags`、`0xFF55` Service UUID 与 `0xFF` 厂商自定义数据（内含默认取 `DeviceID[2..7]` 的 `DeviceID_Short`、`CAP`、`STATE` 与模 256 `StateSeq`）；应用帧采用 10 字节固定开销（2B `SEQ` Big-Endian，最大帧长 512B / 最大载荷 502B），CRC-16/CCITT-FALSE 错误静默丢弃；应用层多字节整型严格采用**大端序 (Big-Endian)**，广播 `CID` 采用 Bluetooth SIG 标准**小端序**。
 - **强制规则**：
-  - 31 字节主广播必须严格满足 `3B Flags + 4B UUID16 (0xFF55) + 24B Manufacturer Data (0xFF)` 布局，禁止私自直接用 `raw_mac ^ 0xAD` 替代 `DeviceID_Short`。
+  - 31 字节主广播必须严格满足 `3B Flags + 4B UUID16 (0xFF55) + 24B Manufacturer Data (0xFF)` 布局，禁止使用 BLE MAC 作为跨平台永久设备身份或用 `raw_mac ^ 0xAD` 替代 `DeviceID_Short`。
   - PID（功能能力）与 ModelID（外观款式）在固件中彻底解耦，同硬件平台共享同一固件镜像；Control Service 采用项目专用 `0xFF55`（避开已有项目 `0xFF77` 与公版冲突），Write/Notify 采用自定义 128-bit UUID。
+  - V1.1 帧格式与 V1.0 不兼容，禁止在同一连接内混用或猜测解析两套帧结构。
 
 ---
 

@@ -13,7 +13,8 @@ OTA 固件升级与设备管理规范关注的是物联网硬件设备（YeahBox
 ```text
 {
   "product_id": "0x0001",                   // 2 字节产品型号 (PID，对齐 BLE 广播规范)
-  "device_mac": "AA:BB:CC:DD:EE:FF",        // 6 字节经典蓝牙 / Wi-Fi 物理 MAC 地址
+  "device_id": "0102030405060708",          // 8 字节设备唯一逻辑身份 (BLE 跨平台绑定核心标识，不依赖 MAC)
+  "device_mac": "AA:BB:CC:DD:EE:FF",        // 6 字节 Wi-Fi / 物理接口 MAC 地址 (仅辅助运维，不得作为 BLE 跨平台永久身份)
   "device_sn": "YB202611040001",            // 产线唯一产品序列号 (Serial Number)
   "hardware_version": "HW_V2.1",            // 硬件 PCB 主板物料版本
   "device_secret": "9a744b21a476886e..."    // 出厂固化的设备通信私密密钥 (用于 MQTT 鉴权)
@@ -107,35 +108,37 @@ stateDiagram-v2
 
 ## 3.1 基于 BLE 通道的分包传输规范（GATT OTA）
 
-依据 [BLE API 规范.md](file:///Users/grandboy/Desktop/gb-project-guidelines/BLE%20API%20%E8%A7%84%E8%8C%83.md)，BLE MTU 交换后有效载荷通常在 240 字节左右，必须遵循滑动窗口流控：
+依据 [BLE API 规范.md](../1.%20%E5%8D%8F%E8%AE%AE%E8%A7%84%E8%8C%83/BLE%20API%20%E8%A7%84%E8%8C%83.md) 第 13 章（CMD `0xC0`–`0xC9`），BLE MTU 协商后单个 GATT PDU 可容纳载荷由 `OTA_GET_INFO (0xC2)` 返回，并遵循滑动窗口流控与断点续传：
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor App as 手机 App (Central)
-    participant Dev as YeahBox 音箱 (Peripheral)
+    participant Dev as 智能设备 (Peripheral)
 
-    App->>Dev: 1. 协商最大 MTU (如 247 Bytes)
-    App->>Dev: 2. 发送 OTA 请求帧 (包含固件版本, 总大小, SHA-256)
+    App->>Dev: 1. 订阅 Notify (CCCD) 并可选协商最大 MTU (如 247 Bytes)
+    App->>Dev: 2. OTA_START 0xC1 (含固件版本, 总大小, SHA-256)
     Dev->>Dev: 校验电量 (>=30%) 与硬件型号
-    Dev-->>App: 回复 ACK (允许升级，返回单包 Payload 大小 240 Bytes, 窗口大小 W=8)
+    Dev-->>App: 回复 RESPONSE (允许升级，返回 TransferID)
+    App->>Dev: 3. OTA_GET_INFO 0xC2 / OTA_BEGIN 0xC3
+    Dev-->>App: 返回单块大小与滑动窗口大小 (如 W=8)
     
-    loop 窗口滑动传输 (每 8 包确认一次)
-        App->>Dev: 数据包 Packet #1 (Seq=0)
-        App->>Dev: 数据包 Packet #2 (Seq=1)
+    loop 窗口滑动传输 (OTA_DATA 0xC4，每窗口确认一次)
+        App->>Dev: 数据块 Packet #1 (BlockIndex=0)
+        App->>Dev: 数据块 Packet #2 (BlockIndex=1)
         App->>Dev: ...
-        App->>Dev: 数据包 Packet #8 (Seq=7)
-        Dev-->>App: 窗口回执 ACK (Next Expected Seq=8, CRC 正常)
+        App->>Dev: 数据块 Packet #8 (BlockIndex=7)
+        Dev-->>App: 窗口回执 ACK (Next Expected Index=8, 校验正常)
     end
 
     Note over App, Dev: 断点续传处理 (若蓝牙因距离远闪断重连)
-    App->>Dev: 重连后发送断点查询 (GET_OTA_STATUS)
+    App->>Dev: 重连后发送 OTA_GET_STATUS (0xC0) / OTA_QUERY_OFFSET (0xC5)
     Dev-->>App: 返回已落盘偏移量 (Offset = 184320 Bytes)
     App->>Dev: 从指定 Offset 继续传输后续分包
 
-    App->>Dev: 发送升级完成结束帧 (FINISH)
-    Dev->>Dev: 执行全量 SHA-256 比对与签名验签
-    Dev-->>App: 回复升级准备就绪，即将重启
+    App->>Dev: 发送 OTA_END (0xC6) 触发全量校验与签名验签
+    Dev->>Dev: 执行全量 SHA-256 比对与 ECDSA 签名验签
+    Dev-->>App: 回复验证通过，App 下发 OTA_REBOOT (0xC8) 切换分区重启
 ```
 
 ---

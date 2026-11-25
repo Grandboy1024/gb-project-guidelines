@@ -210,13 +210,13 @@ typedef struct {
     uint8_t mfg_len;            // 0x17 (23 字节 = 1B Type + 22B Payload)
     uint8_t mfg_type;           // 0xFF (Manufacturer Specific)
     uint16_t company_id;        // CID: SIG 分配厂商码 (小端序，内测暂用 0xFFFF)
-    uint8_t adv_version;        // 0x01 (广播数据结构版本号)
+    uint8_t adv_version;        // 0x02 (V1.1 广播数据结构版本号)
     uint16_t brand_id;          // BID: 品牌/品类识别码 (大端序)
     uint16_t product_id;        // PID: 硬件功能型号识别码 (大端序)
     uint8_t model_id;           // 外观与商业款型识别码 (基准款 0x00)
-    uint8_t cap_bitmap;         // CAP: 硬件能力与配网模式位图
-    uint8_t state_bitmap;       // STATE: Bit0开关 / Bit1绑定 / Bit2配网窗口 / Bit3 OTA
-    uint8_t state_seq;          // 状态变更循环递增序号 (防旧广播缓存回退)
+    uint8_t cap_bitmap;         // CAP: Bit0 BLE / Bit1 Wi-Fi / Bit2 Mesh / Bit3 Auth / Bit4 OTA / Bit5 MultiCh / Bit6 Segment
+    uint8_t state_bitmap;       // STATE: Bit0开关 / Bit1绑定 / Bit2配网窗口 / Bit3 OTA / Bit4 Wi-Fi连接 / Bit5 忙碌
+    uint8_t state_seq;          // 状态变更模 256 循环递增序号 (防旧广播缓存回退)
     uint8_t device_id_short[6]; // DeviceID[2..7] 原始字节流（非物理 MAC 简单异或）
     uint8_t reserve[5];         // 预留扩展字段，固定全填充 0x00
 } ble_adv_packet_t;
@@ -238,8 +238,8 @@ _Static_assert(sizeof(ble_adv_packet_t) == 31, "BLE legacy adv packet must be 31
 ### 4.2 BLE GATT 通信契约
 
 - **服务与特征 UUID**：Control Service 使用 `0xFF55`（主广播携带），Write 与 Notify 特征严格使用《BLE API 规范》定义的自定义 128-bit UUID（`A83B0002-7D4E-4F9A-9C12-8E4B01000001` / `A83B0003-7D4E-4F9A-9C12-8E4B01000001`），严禁继续使用未分配的 `0xFF88`/`0xFF99` Base UUID。
-- **多字节字节序**：所有通过 GATT Characteristic 发送或接收的多字节数值（Length、CRC16、色温值等）必须严格采用**大端序 (Big-Endian)**。
-- **闭环应答与主动通知**：除单向触发动作外，App 下发的每条写指令设备端必须在 200ms 内回复响应帧；物理按键或传感器引发的状态变动必须通过 Notify 特征主动推送到 App（App 端须先使能 `0x2902` CCCD 后再发起业务请求）。
+- **V1.1 帧结构与字节序**：采用 **10 字节固定头尾开销**（1B Head `0xFE` + 1B Type + 1B CMD + 1B Status + 2B SEQ + 2B Length + NB Data + 2B CRC16，单帧上限 512B / 最大载荷 502B）。所有多字节数值（`SEQ`、`Length`、`CRC16`、色温值等）必须严格采用**大端序 (Big-Endian)**；CRC-16/CCITT-FALSE 校验失败静默丢弃；设备端需维护连接级 `SEQ` 事务缓存实现幂等去重与 `SEQ_CONFLICT` 防护。
+- **闭环应答与主动通知**：常规控制写指令设备端应在 200ms 内回复 `RESPONSE` 帧，耗时异步任务（配网、复位、OTA）先返回已接受状态再通过 `EVENT` 或任务查询接口收敛；物理按键或传感器引发的状态变动必须通过 Notify 特征主动推送到 App（App 端须先使能 `0x2902` CCCD 后再发起业务请求）。
 
 ### 4.3 MQTT 物模型与 JSON 解析安全（对齐《MQTT 规范》）
 
