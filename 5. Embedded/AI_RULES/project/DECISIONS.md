@@ -32,10 +32,10 @@
 
 - **决策状态**：已确认 (Confirmed)
 - **决策背景**：iOS 系统不向 App 暴露真实蓝牙 MAC 地址且后台扫描依赖广播中的 Service UUID；跨端多字节整型若字节序不一致将导致协议解析错乱；简单的固定单字节 MAC 异或（`^ 0xAD`）不具备实际安全性。
-- **决策结论**：BLE GATT 协议严格执行《BLE API 规范》，31 字节主广播携带 `Flags`、`0xFF77` Service UUID 与 `0xFF` 厂商自定义数据（内含 `DeviceID[2..7]` 截取的 `DeviceID_Short`、`CAP`、`STATE` 与 `StateSeq`），应用层多字节整型严格采用**大端序 (Big-Endian)**，广播 `CID` 采用 Bluetooth SIG 标准**小端序**。
+- **决策结论**：BLE GATT 协议严格执行《BLE API 规范》，31 字节主广播携带 `Flags`、`0xFF55` Service UUID 与 `0xFF` 厂商自定义数据（内含 `DeviceID[2..7]` 截取的 `DeviceID_Short`、`CAP`、`STATE` 与 `StateSeq`），应用层多字节整型严格采用**大端序 (Big-Endian)**，广播 `CID` 采用 Bluetooth SIG 标准**小端序**。
 - **强制规则**：
-  - 31 字节主广播必须严格满足 `3B Flags + 4B UUID16 (0xFF77) + 24B Manufacturer Data (0xFF)` 布局，禁止私自直接用 `raw_mac ^ 0xAD` 替代 `DeviceID_Short`。
-  - PID（功能能力）与 ModelID（外观款式）在固件中彻底解耦，同硬件平台共享同一固件镜像；`CID` 量产必须使用 SIG 正式分配值（联调测试暂用 `0xFFFF`）。
+  - 31 字节主广播必须严格满足 `3B Flags + 4B UUID16 (0xFF55) + 24B Manufacturer Data (0xFF)` 布局，禁止私自直接用 `raw_mac ^ 0xAD` 替代 `DeviceID_Short`。
+  - PID（功能能力）与 ModelID（外观款式）在固件中彻底解耦，同硬件平台共享同一固件镜像；Control Service 采用项目专用 `0xFF55`（避开已有项目 `0xFF77` 与公版冲突），Write/Notify 采用自定义 128-bit UUID。
 
 ---
 

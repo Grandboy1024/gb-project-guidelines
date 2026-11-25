@@ -18,7 +18,7 @@ ESP-IDF 嵌入式固件工程已完成底层硬件技术选型对齐、组件化
 |---|---|---|
 | **架构总设计** | 已就绪 (Completed) | ESP-IDF 组件化垂直分层、FreeRTOS 多任务调度与 A/B 双分区 OTA 机制已固化 |
 | **AI 协作规范体系** | 已就绪 (Completed) | `RULES.md` 总清单、`core/`、`development/`、`project/`、平台适配入口全部就绪 |
-| **BLE 通信协议栈** | 已就绪 (Completed) | 严格对齐《BLE API 规范》：31 字节主广播（`Flags` + `0xFF77` UUID + `0xFF` 厂商数据）、`DeviceID_Short` 与大端序契约已确立 |
+| **BLE 通信协议栈** | 已就绪 (Completed) | 严格对齐《BLE API 规范》：31 字节主广播（`Flags` + `0xFF55` UUID + `0xFF` 厂商数据）、`DeviceID_Short` 与大端序契约已确立 |
 | **MQTT 云端中枢** | 已就绪 (Completed) | 严格对齐《MQTT 规范》：TLS 加密、小驼峰物模型、60s KeepAlive 与遗嘱消息契约已定义 |
 | **照明驱动与算法** | 已就绪 (Completed) | LEDC $\ge 20\text{kHz}$ 无频闪 PWM、Gamma 2.2 查表校正与 CCT 双色温恒功率混色算法已固化 |
 | **OTA 容灾与防变砖** | 已就绪 (Completed) | 严格对齐《OTA 固件升级与设备管理规范》：YBOT 二进制信封、ECDSA-SHA256 验签、Anti-Rollback 与自动回滚已定义 |

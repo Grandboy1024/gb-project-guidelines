@@ -7,8 +7,8 @@
 ## [1.1.0] - 2026-11-25
 
 ### BLE 广播与跨文档契约对齐
-- **广播结构升级**：同步《BLE API 规范》第二章修订，将 31 字节主广播统一为 `3B Flags + 4B Service UUID (0xFF77) + 24B 厂商数据 (0xFF)`，新增 `AdvVer`、`CAP`、`StateSeq` 与 `STATE.Bit2` 可配网窗口位。
-- **标识与安全修正**：废弃物理 MAC 异或 `0xAD` 混淆方案，统一采用 `DeviceID[2..7]` 填充 `DeviceID_Short`；同步修正 `CONTEXT.md` 中的 GATT UUID（`0xFF77/0xFF88/0xFF99`）及 `DECISIONS.md`（ADR-003）。
+- **广播结构升级**：同步《BLE API 规范》第二章修订，将 31 字节主广播统一为 `3B Flags + 4B Service UUID (0xFF55) + 24B 厂商数据 (0xFF)`，新增 `AdvVer`、`CAP`、`StateSeq` 与 `STATE.Bit2` 可配网窗口位（Control Service 采用 `0xFF55` 以避开他项目占用的 `0xFF77`）。
+- **标识与安全修正**：废弃物理 MAC 异或 `0xAD` 混淆方案，统一采用 `DeviceID[2..7]` 填充 `DeviceID_Short`；将 GATT Write/Notify 特征升级为自定义 128-bit UUID（`A83B0002-...` / `A83B0003-...`），并同步更新 `CONTEXT.md`、`ESP-IDF 固件项目规范.md` 及 `DECISIONS.md`（ADR-003）。
 
 ---
 

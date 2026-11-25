@@ -62,7 +62,7 @@ AI 生成的所有代码必须 100% 契合以下技术决策，严禁违背：
 | **操作系统与运行时** | `FreeRTOS` (ESP-IDF v5.x 原生多任务抢占式内核) | `DEV-002` / `ESP-IDF 固件项目规范.md` 第一节 |
 | **固件框架与架构** | `ESP-IDF Component-based Architecture` (组件化高内聚低耦合分层) | `DEV-002` / `ESP-IDF 固件项目规范.md` 第二节 |
 | **编程语言标准** | `C99 / C11` 严格规范（局部 C++17 受限子集，禁用异常、RTTI 与动态内存滥用） | `DEV-001` / `ESP-IDF 固件项目规范.md` 第一节 |
-| **蓝牙通信协议栈** | `NimBLE / Bluedroid` (BLE 5.0 GATT Server，对齐《BLE API 规范》31B 主广播含 `0xFF77` UUID、`0xFF` 厂商数据与 `DeviceID_Short`) | `DEV-001` / `ESP-IDF 固件项目规范.md` 第四节 |
+| **蓝牙通信协议栈** | `NimBLE / Bluedroid` (BLE 5.0 GATT Server，对齐《BLE API 规范》31B 主广播含 `0xFF55` UUID、`0xFF` 厂商数据与 `DeviceID_Short`) | `DEV-001` / `ESP-IDF 固件项目规范.md` 第四节 |
 | **物联网网络协议** | `esp-mqtt` (MQTT 3.1.1/5.0 over TLS 1.2/1.3) + `esp_wifi` 配网，严格对齐《MQTT 规范》 | `DEV-002` / `ESP-IDF 固件项目规范.md` 第四节 |
 | **空中升级与防变砖** | `A/B 双分区 OTA` + `Bootloader` 自动健康自检与失败回滚，对齐《OTA 固件升级与设备管理规范》 | `DEV-002` / `ESP-IDF 固件项目规范.md` 第六节 |
 | **数字签名与固件安全** | `YBOT` 二进制信封格式 + `ECDSA-SHA256` 离线私钥验签 + `Anti-Rollback` 防降级计数器 | `DEV-002` / `ESP-IDF 固件项目规范.md` 第六节 |

@@ -29,7 +29,7 @@ BLE Legacy 主广播包固定总长 **31 字节**，设备可读名称（Local N
 | 偏移 | 所属段 / 字段名 | 长度 | 字节序 | 示例 / 取值 | 说明 |
 |:---:|---|:---:|:---:|---|---|
 | `0~2` | `Flags` (`0x01`) | 3B | - | `02 01 06` | 标准广播标志（LE General Discoverable \| BR/EDR Not Supported） |
-| `3~6` | `Service UUID` (`0x03`) | 4B | 小端序 | `03 03 77 FF` | 16-bit Service UUID（`0xFF77`），用于 iOS 后台唤醒与硬件过滤 |
+| `3~6` | `Service UUID` (`0x03`) | 4B | 小端序 | `03 03 55 FF` | 16-bit Service UUID（`0xFF55`），用于 iOS 后台唤醒与硬件过滤 |
 | `7` | `AD Length` | 1B | - | `0x17` (23) | 厂商自定义数据段长度（`1B Type + 22B Payload`） |
 | `8` | `AD Type` | 1B | - | `0xFF` | Manufacturer Specific Data 固定标识 |
 | `9~10` | `CID` | 2B | 小端序 | `0xFFFF`（内测） | SIG 厂商识别码（量产须使用正式分配值） |
@@ -44,7 +44,7 @@ BLE Legacy 主广播包固定总长 **31 字节**，设备可读名称（Local N
 | `26~30` | `RESERVED` | 5B | - | 全 `0x00` | 预留扩展，未启用前固定填 `0x00` |
 
 > **平台解析说明**：
-> - 主广播包中显式携带 `0xFF77` Service UUID，是 **iOS 后台扫描唤醒**及 **Android / iOS 硬件层扫描过滤**的必要条件，不得省略。
+> - 主广播包中显式携带 `0xFF55` Service UUID，是 **iOS 后台扫描唤醒**及 **Android / iOS 硬件层扫描过滤**的必要条件，不得省略。
 > - iOS `CBAdvertisementDataManufacturerDataKey` 返回的数据从 **Byte 9（`CID`）** 开始；Android `ScanRecord.getManufacturerSpecificData(cid)` 按 `CID` 索引后，返回的数据从 **Byte 11（`AdvVer`）** 开始。
 
 ### 2.2 逐字节用途详表（Byte 0 ~ Byte 30）
@@ -65,8 +65,8 @@ BLE Legacy 主广播包固定总长 **31 字节**，设备可读名称（Local N
 |:---:|---|:---:|---|
 | `Byte 3` | `UUID` 长度 | `0x03` | Service UUID AD 段长度，表示后续跟 3 字节（`Byte 4~6`） |
 | `Byte 4` | `UUID` 类型 | `0x03` | SIG 标准 AD Type（Complete List of 16-bit Service UUIDs） |
-| `Byte 5` | `Service UUID` 低字节 | `0x77` | 控制服务 UUID `0xFF77` 低字节（SIG 规定广播 UUID 采用小端序） |
-| `Byte 6` | `Service UUID` 高字节 | `0xFF` | 控制服务 UUID `0xFF77` 高字节（供 iOS 后台唤醒与硬件过滤） |
+| `Byte 5` | `Service UUID` 低字节 | `0x55` | 控制服务 UUID `0xFF55` 低字节（SIG 规定广播 UUID 采用小端序） |
+| `Byte 6` | `Service UUID` 高字节 | `0xFF` | 控制服务 UUID `0xFF55` 高字节（供 iOS 后台唤醒与硬件过滤） |
 
 #### 3. 厂商自定义数据头（Byte 7 ~ Byte 8，共 2B）
 
@@ -140,9 +140,9 @@ BLE Legacy 主广播包固定总长 **31 字节**，设备可读名称（Local N
   - **未知 `BID`**：APP **必须直接忽略**非本品牌/品类的广播包。
   - **未知 `PID`**：若旧版 APP 扫描到新硬件 `PID`，应优先尝试从云端拉取动态物模型（TSL），无网络或拉取失败时提示升级 APP 或降级至基础通用控制，严禁闪退。
   - **PID 与 ModelID 解耦**：`PID` 决定硬件能力集与指令集；`ModelID` 决定 `(BID, PID)` 下的外观渲染与 UI 贴图。若 APP 遇到未识别的 `ModelID`，**必须自动降级加载 `0x00`（默认款）UI 资产**，严禁阻断配网。
-- **SIG 认证合规提示**：
-  - 广播 `CID` 禁止在量产固件中使用未经 Bluetooth SIG 分配的私有值；联调阶段统一使用测试值 `0xFFFF`。
-  - 若产品需通过严格 Bluetooth SIG / BQB 认证，评估将 `0xFF77` 替换为向 SIG 申请的正式 16-bit UUID 或在后续协议版本中调整为自定义 128-bit UUID。
+- **项目 UUID 隔离与模块约定**：
+  - 广播 `CID` 禁止随意与外部已知厂商冲突；联调阶段暂用 `0xFFFF`（或填方案商模块指定厂商 ID）。
+  - Control Service 分配本项目专用的 **`0xFF55`**，与内部其他项目及常见公版透传模块（`0xFFE0`/`0xFFF0`）隔离，避免扫描串扰。
 
 ### 2.4 Scan Response 与设备名称
 
@@ -164,15 +164,21 @@ BLE Legacy 主广播包固定总长 **31 字节**，设备可读名称（Local N
 
 | 服务 / 特征 | 属性 (Properties) | 128-bit UUID | 说明 |
 |---|---|---|---|
-| **Control Service** | Primary Service | `0000FF77-0000-1000-8000-00805F9B34FB` | 核心控制服务 |
-| **Write Characteristic** | `Write` / `Write Without Response` | `0000FF88-0000-1000-8000-00805F9B34FB` | APP 下发请求（REQUEST） |
-| **Notify Characteristic** | `Notify` | `0000FF99-0000-1000-8000-00805F9B34FB` | 设备应答 (RESPONSE) 与主动上报 |
-| **CCCD** | Descriptor | `00002902-0000-1000-8000-00805F9B34FB` | 必须写入 `0x0001` 开启 Notify 监听 |
+| **Control Service** | Primary Service | `0000FF55-0000-1000-8000-00805F9B34FB` | 核心控制服务（简写 `0xFF55`，仅服务放主广播包） |
+| **Write Characteristic** | `Write` / `Write Without Response` | `A83B0002-7D4E-4F9A-9C12-8E4B01000001` | APP 下发请求（REQUEST），采用自定义 128-bit UUID |
+| **Notify Characteristic** | `Notify` | `A83B0003-7D4E-4F9A-9C12-8E4B01000001` | 设备应答 (RESPONSE) 与主动上报，采用自定义 128-bit UUID |
+| **CCCD** | Descriptor | `00002902-0000-1000-8000-00805F9B34FB` | SIG 标准描述符，必须写入 `0x0001` 开启 Notify 监听 |
+
+> **UUID 分配说明**：特征（Write / Notify）不上广播包，不占用 31 字节主广播空间，强制采用独立生成的自定义 128-bit UUID，避免与其他项目或公版模块冲突；`Control Service` 采用项目专用 `0xFF55`，兼顾 4 字节紧凑广播格式与 iOS 后台唤醒。
 
 ### 3.2 链路交互约束
+- **建连初始化时序（严格执行）**：APP 建立 BLE 连接后，必须按顺序完成：**① 协商 ATT MTU（目标 `247`） $\to$ ② 发现 Control Service 与特征 $\to$ ③ 向 `CCCD (0x2902)` 写入 `0x0001` 并等待 Write Response $\to$ ④ 才允许下发业务 REQUEST（如 `0x01` 设备信息查询）**，防止设备端 Notify 应答因未完成订阅而丢失。
+- **Write 属性分工原则**（复用同一 Write 特征，按单次写入参数切换，无需拆分为两个特征 UUID）：
+  - **`Write Without Response`**：用于高频连续调节（如手指拖动亮度/色温滑条，客户端需配合 50~100ms 节流），避免 ATT 层等待 ACK 引起队头阻塞。**滑条拖动中的中间帧不进入超时重传队列**（防止旧亮度包滞后重发导致灯光闪烁回退）；松手停止时再补发一帧 **`Write`（With Response）** 完成最终状态闭环确认。
+  - **`Write`（With Response）**：用于关键配置与低频指令（如设备信息查询 `0x01`、出厂复位 `0x11`、Wi-Fi 配网凭证、OTA 握手 `0x1F` 及滑条松手终态帧），确保链路层确认送达。
 - **有效载荷计算**：$\text{MaxDataLength} = \text{ATT\_MTU} - 3 (\text{ATT Header}) - 9 (\text{Frame Overhead})$。
   - MTU 协商为 247 时，单个 DATA 最大 **235 字节**；默认 MTU=23 时，单个 DATA 最大 **11 字节**。
-- **超时与重发**：APP 请求响应超时为 **1500 ms**，超时未响应最多重试 **2 次**。重试时必须复用相同的 `Transaction ID`。
+- **超时与重发**：关键指令与 `Write` 请求响应超时为 **1500 ms**，超时未响应最多重试 **2 次**。重试时必须复用相同的 `Transaction ID`（`SEQ`）。（高频滑动调节的 `Write Without Response` 中间帧不执行超时重试。）
 - **断线清理**：物理链路断开时，APP 必须立刻清空未完成的等待队列；重连后全量重新查询状态。
 
 ---

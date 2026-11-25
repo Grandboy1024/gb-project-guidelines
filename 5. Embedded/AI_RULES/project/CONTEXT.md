@@ -33,7 +33,7 @@ firmware/
     ├── drivers/                    # 硬件抽象驱动：LEDC 高频 PWM、ADC 电量采样、GPIO/PIR 中断、按键
     ├── lighting_engine/            # 照明核心算法：Gamma 2.2 查表校正、CCT 双色温插值、HSV 色彩空间转换
     ├── protocols/                  # 通信协议栈：
-    │   ├── ble/                    # 对齐《BLE API 规范》：31B 主广播构造 (Flags + 0xFF77 UUID + 0xFF 厂商数据)、GATT Server
+    │   ├── ble/                    # 对齐《BLE API 规范》：31B 主广播构造 (Flags + 0xFF55 UUID + 0xFF 厂商数据)、GATT Server
     │   ├── mqtt/                   # 对齐《MQTT 规范》：TLS 加密传输、小驼峰 JSON 物模型、60s 心跳、遗嘱 LWT
     │   └── wifi_prov/              # Wi-Fi 配网管理器：支持 BLE Protocomm 配网与 SoftAP 配网
     ├── ota_manager/                # OTA 固件升级：YBOT 头部信封解析、ECDSA 离线验签、A/B 双分区刷写与自检
@@ -46,8 +46,8 @@ firmware/
 ## 3. 跨系统契约对齐与依赖关系
 
 1. **移动端 (Flutter App)**：
-   - 固件 BLE 主广播严格采用 31 字节格式（3B Flags + 4B `0xFF77` Service UUID + 24B `0xFF` 厂商数据，含 `AdvVer`、`BID`、`PID`、`ModelID`、`CAP`、`STATE`、`StateSeq` 与 `DeviceID_Short`）。
-   - App 发送的控制指令通过 Control Service (`0xFF77`) 下的 Write (`0xFF88`) / Notify (`0xFF99`) 特征交互，所有应用层多字节字段均遵循**大端序 (Big-Endian)**。
+   - 固件 BLE 主广播严格采用 31 字节格式（3B Flags + 4B `0xFF55` Service UUID + 24B `0xFF` 厂商数据，含 `AdvVer`、`BID`、`PID`、`ModelID`、`CAP`、`STATE`、`StateSeq` 与 `DeviceID_Short`）。
+   - App 发送的控制指令通过 Control Service (`0xFF55`) 下的自定义 128-bit 特征交互（Write: `A83B0002-7D4E-4F9A-9C12-8E4B01000001` / Notify: `A83B0003-7D4E-4F9A-9C12-8E4B01000001`），所有应用层多字节字段均遵循**大端序 (Big-Endian)**。
 2. **云端中枢 (FastAPI & MQTT Broker)**：
    - 设备建连时向 `devices/{product_id}/{device_sn}/status` 注册遗嘱消息 (LWT)。
    - 属性上报与下发 Payload 字段严格遵循小驼峰命名（如 `deviceId`、`batteryLevel`、`firmwareVersion`）。

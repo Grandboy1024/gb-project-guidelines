@@ -7,7 +7,7 @@
 | 固件开发框架 | **ESP-IDF v5.x** | 官方稳定长期支持版本 (LTS)，采用组件化驱动架构与统一构建系统 |
 | 编程语言标准 | **C99 / C11 强类型静态规范** | 严格类型检查、显式位宽 (`uint8_t` 等)，局部支持受限 C++17（严禁异常与 RTTI） |
 | 架构设计模式 | **组件化垂直分层 (Component-based Layered)** | 见第三节，`bsp / drivers / lighting_engine / protocols / ota_manager / storage` |
-| 蓝牙通信协议栈 | **NimBLE / Bluedroid (BLE 5.0 GATT)** | 见第四节，严格对齐《BLE API 规范》：31 字节主广播（Flags + `0xFF77` UUID + `0xFF` 厂商数据）、`DeviceID_Short`、大端序 |
+| 蓝牙通信协议栈 | **NimBLE / Bluedroid (BLE 5.0 GATT)** | 见第四节，严格对齐《BLE API 规范》：31 字节主广播（Flags + `0xFF55` UUID + `0xFF` 厂商数据）、`DeviceID_Short`、大端序 |
 | 云端通信与配网 | **esp-mqtt (TLS 1.2/1.3) + esp_wifi** | 见第四节，严格对齐《MQTT 规范》：小驼峰 JSON 物模型、60s KeepAlive、遗嘱 LWT |
 | OTA 空中升级与容灾 | **A/B 双分区无缝升级 + Bootloader 回滚** | 见第六节，严格对齐《OTA 固件升级与设备管理规范》：YBOT 二进制信封、ECDSA-SHA256 验签、Anti-Rollback |
 | 调光控制与 PWM | **LEDC 硬件定时器 PWM** | 见第五节，频率 $\ge 20\text{kHz}$ 无频闪，13-bit 分辨率，Gamma 2.2 查找表，CCT 恒功率调色 |
@@ -90,7 +90,7 @@ my-firmware-project/
 │   ├── protocols/                # 网络与本地通信协议栈
 │   │   ├── CMakeLists.txt
 │   │   ├── ble/                  # 蓝牙通信实现 (对齐《BLE API 规范》)
-│   │   │   ├── ble_adv.c         # 31B 主广播组包 (Flags + 0xFF77 UUID + 0xFF 厂商数据) 与 DeviceID_Short 填充
+│   │   │   ├── ble_adv.c         # 31B 主广播组包 (Flags + 0xFF55 UUID + 0xFF 厂商数据) 与 DeviceID_Short 填充
 │   │   │   ├── ble_gatts.c       # GATT Server 服务注册与大端序指令解析
 │   │   │   └── include/
 │   │   ├── mqtt/                 # 云端物联网通信 (对齐《MQTT 规范》)
@@ -190,7 +190,7 @@ FreeRTOS 任务优先级规划表：
 
 ### 4.1 BLE 广播包封装实现（对齐《BLE API 规范》）
 
-设备通过总长固定 31 字节的 Legacy 主广播包对外广播元数据（3B `Flags` + 4B `0xFF77` Service UUID + 24B `AD Type 0xFF` 厂商自定义数据）。手机 App 无需建立 GATT 连接即可识别设备能力、状态与短标识，并支持 iOS 后台唤醒与硬件过滤：
+设备通过总长固定 31 字节的 Legacy 主广播包对外广播元数据（3B `Flags` + 4B `0xFF55` Service UUID + 24B `AD Type 0xFF` 厂商自定义数据）。手机 App 无需建立 GATT 连接即可识别设备能力、状态与短标识，并支持 iOS 后台唤醒与硬件过滤：
 
 ```c
 // components/protocols/ble/include/ble_adv.h
@@ -204,7 +204,7 @@ typedef struct {
     // 2. Complete 16-bit Service UUIDs AD Structure (4 Bytes)
     uint8_t uuid_len;           // 0x03
     uint8_t uuid_type;          // 0x03 (Complete 16-bit Service UUIDs)
-    uint16_t service_uuid16;    // 0xFF77 (小端序存储为 0x77, 0xFF)
+    uint16_t service_uuid16;    // 0xFF55 (小端序存储为 0x55, 0xFF)
 
     // 3. Manufacturer Specific Data AD Structure (24 Bytes)
     uint8_t mfg_len;            // 0x17 (23 字节 = 1B Type + 22B Payload)
@@ -237,8 +237,9 @@ _Static_assert(sizeof(ble_adv_packet_t) == 31, "BLE legacy adv packet must be 31
 
 ### 4.2 BLE GATT 通信契约
 
+- **服务与特征 UUID**：Control Service 使用 `0xFF55`（主广播携带），Write 与 Notify 特征严格使用《BLE API 规范》定义的自定义 128-bit UUID（`A83B0002-7D4E-4F9A-9C12-8E4B01000001` / `A83B0003-7D4E-4F9A-9C12-8E4B01000001`），严禁继续使用未分配的 `0xFF88`/`0xFF99` Base UUID。
 - **多字节字节序**：所有通过 GATT Characteristic 发送或接收的多字节数值（Length、CRC16、色温值等）必须严格采用**大端序 (Big-Endian)**。
-- **闭环应答与主动通知**：除单向触发动作外，App 下发的每条写指令设备端必须在 200ms 内回复响应帧；物理按键或传感器引发的状态变动必须通过 Notify 特征主动推送到 App。
+- **闭环应答与主动通知**：除单向触发动作外，App 下发的每条写指令设备端必须在 200ms 内回复响应帧；物理按键或传感器引发的状态变动必须通过 Notify 特征主动推送到 App（App 端须先使能 `0x2902` CCCD 后再发起业务请求）。
 
 ### 4.3 MQTT 物模型与 JSON 解析安全（对齐《MQTT 规范》）
 
@@ -528,7 +529,7 @@ TEST_CASE("CCT color mixing null pointer defense", "[lighting]") {
 - [ ]  跨任务数据共享已使用 FreeRTOS 队列、事件组或互斥量保护，无裸全局变量
 - [ ]  LEDC 硬件定时器 PWM 频率 $\ge 20\text{kHz}$，位深 13-bit，已接入 Gamma 2.2 调光曲线
 - [ ]  CCT 色温调节实现了功率守恒算法，调光具有平滑渐变 (Fade) 效果，无频闪
-- [ ]  BLE 主广播严格对齐 31 字节格式（3B Flags + 4B `0xFF77` UUID + 24B `0xFF` 厂商数据），携带 `DeviceID_Short`、`CAP`、`STATE` 与 `StateSeq`
+- [ ]  BLE 主广播严格对齐 31 字节格式（3B Flags + 4B `0xFF55` UUID + 24B `0xFF` 厂商数据），携带 `DeviceID_Short`、`CAP`、`STATE` 与 `StateSeq`
 - [ ]  BLE GATT 通信所有多字节整型字段均严格使用大端序 (Big-Endian)
 - [ ]  OTA 固件升级具备 YBOT 头部校验、硬件掩码比对、ECDSA 验签与自检回滚保护
 - [ ]  OTA 升级启动前校验了电池电量 ($\ge 30\%$)，低电量时坚决拒绝升级

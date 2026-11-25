@@ -58,7 +58,7 @@ flowchart TD
   └── 存储与电源管理：components/storage/ (NVS 防抖持久化), components/power_mgmt/
         ▼
 [第 3 层：通信与协议层 (Protocols)]
-  ├── 蓝牙低功耗：components/protocols/ble/ (GATT Server, 31B 主广播含 0xFF77 UUID 与 0xFF 厂商数据)
+  ├── 蓝牙低功耗：components/protocols/ble/ (GATT Server, 31B 主广播含 0xFF55 UUID 与 0xFF 厂商数据)
   ├── 云端与配网：components/protocols/mqtt/ (TLS 鉴权, JSON 物模型, 遗嘱 LWT)
   └── 固件空中升级：components/ota_manager/ (双分区写入, YBOT 验签, 防回滚)
         ▼
